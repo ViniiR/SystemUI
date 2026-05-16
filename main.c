@@ -1,7 +1,5 @@
-#include <gio/gio.h>
-#include <glib-object.h>
-#include <gtk-4.0/gtk/gtk.h>
-#include <gtk/gtkshortcut.h>
+#include <gtk/gtk.h>
+#include "handlers.h"
 
 static void activate(GApplication *app, gpointer *user_data) {
     GtkBuilder *builder = gtk_builder_new_from_file("../src/builder.ui");
@@ -10,6 +8,8 @@ static void activate(GApplication *app, gpointer *user_data) {
 
     gtk_window_set_application(GTK_WINDOW(win), GTK_APPLICATION(app));
     gtk_window_present(GTK_WINDOW(win));
+
+    handle_brightness(builder);
 }
 
 int main(int argc, char **argv) {

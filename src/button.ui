@@ -1,0 +1,16 @@
+<interface>
+    <template class="GtkButton" parent="GtkGrid">
+        <property name="label">label</property>
+        <child>
+        <object class="GtkButton" id="battery-button">
+            <property name="label">Battery</property>
+            <layout>
+                <property name="column">0</property>
+                <property name="row">0</property>
+                <property name="column-span">1</property>
+                <property name="row-span">1</property>
+            </layout>
+        </object>
+        </child>
+    </template>
+</interface>
