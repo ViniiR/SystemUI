@@ -4,13 +4,13 @@
 char *read_file(const char *path) {
     FILE *f = fopen(path, "r");
     if (f == NULL) {
-        fprintf(stderr, "File is null");
+        perror("File is null");
         exit(1);
     }
 
     char *max = malloc(sizeof(char) * 50);
     if (max == NULL) {
-        fprintf(stderr, "File buffer is null");
+        perror("File buffer is null");
         free(max);
         fclose(f);
         exit(1);
@@ -18,7 +18,7 @@ char *read_file(const char *path) {
 
     char *value = fgets(max, 50, f);
     if (value == NULL) {
-        fprintf(stderr, "Failed to read file content");
+        perror("Failed to read file content");
         free(max);
         fclose(f);
         exit(1);
