@@ -1,54 +1,15 @@
 #include "util.h"
-#include <dirent.h>
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
-static char *path = "/sys/class/backlight";
-static char *max = "/max_brightness";
-static char *brightness = "/brightness";
 
 int get_brightness();
 
-void set_brightness(const int percent, const char *filepath);
-
-void set_brightness_all(const int percent);
+void set_brightness(const int percent);
 
 //
 
 void handle_brightness_change(GtkRange *scale, gpointer data) {
-    DIR *dir;
-    struct dirent *entry;
-
-    dir = opendir(path);
-    if (dir == NULL) {
-        perror("Failed to open directory");
-        exit(1);
-    }
-
-    char *max_brightness = malloc(sizeof(char) * 50);
-    if (max_brightness == NULL) {
-        perror("Failed to alloc");
-        exit(1);
-    }
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') {
-            continue;
-        }
-
-        char *filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            perror("Failed to alloc");
-            exit(1);
-        }
-        snprintf(filepath, PATH_MAX, "%s/%s%s", path, entry->d_name, max);
-
-        snprintf(max_brightness, sizeof(strlen(filepath)), "%s",
-                 read_file(filepath));
-
-        break;
-    }
 
     GtkLabel *label = GTK_LABEL(data);
 
@@ -56,9 +17,8 @@ void handle_brightness_change(GtkRange *scale, gpointer data) {
     char *str = g_strdup_printf("%3.0f", value);
 
     gtk_label_set_label(label, str);
-    set_brightness_all(value / 100 * atoi(max_brightness));
+    set_brightness((int)value);
 
-    free(max_brightness);
     g_free(str);
 }
 
@@ -70,90 +30,29 @@ void handle_brightness(GtkBuilder *builder) {
 
     g_signal_connect(scale, "value-changed",
                      G_CALLBACK(handle_brightness_change), label);
-
+    // Set initial value, also calls handle_brightness_change()
     gtk_range_set_value(GTK_RANGE(scale), get_brightness());
 }
 
 //
 
 int get_brightness() {
-    DIR *dir;
-    struct dirent *entry;
+    char *brightness = exec_command("brightnessctl get", "r");
+    char *max_brightness = exec_command("brightnessctl max", "r");
 
-    dir = opendir(path);
-    if (dir == NULL) {
-        perror("Failed to open directory");
-        exit(1);
-    }
+    double percentage = (atof(brightness) / atof(max_brightness) * 100);
 
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') {
-            continue;
-        }
-
-        char *filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            perror("Failed to alloc");
-            exit(1);
-        }
-
-        // Operate on the first file it finds
-        snprintf(filepath, PATH_MAX, "%s/%s%s", path, entry->d_name, max);
-        char *max_brightness = read_file(filepath);
-        free(filepath);
-
-        filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            perror("Failed to alloc");
-            exit(1);
-        }
-        snprintf(filepath, PATH_MAX, "%s/%s%s", path, entry->d_name, max);
-        char *brightness = read_file(filepath);
-
-        int percent = atoi(brightness) / atoi(max_brightness) * 100;
-
-        free(filepath);
-        return percent;
-    }
-
-    return 0;
+    free(brightness);
+    free(max_brightness);
+    return (int)percentage;
 }
 
-void set_brightness(const int percent, const char *filepath) {
-    char *str = malloc(sizeof(char) * 50);
-    sprintf(str, "%i", percent);
+void set_brightness(const int percent) {
+    char *command = malloc(PATH_MAX);
+    snprintf(command, PATH_MAX, "brightnessctl set %i%%", percent);
 
-    write_file(filepath, str);
-    free(str);
-}
+    char *res = exec_command(command, "r");
 
-void set_brightness_all(const int percent) {
-    DIR *dir;
-    struct dirent *entry;
-
-    dir = opendir(path);
-    if (dir == NULL) {
-        perror("Failed to open directory");
-        exit(1);
-    }
-
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') {
-            continue;
-        }
-
-        char *filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            perror("Failed to alloc");
-            exit(1);
-        }
-
-        snprintf(filepath, PATH_MAX, "%s/%s%s", path, entry->d_name,
-                 brightness);
-
-        set_brightness(percent, filepath);
-        free(filepath);
-    }
-
-    closedir(dir);
+    free(command);
+    free(res);
 }
