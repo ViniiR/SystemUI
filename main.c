@@ -12,6 +12,7 @@ static void activate(GApplication *app, gpointer *user_data) {
     handle_brightness(builder);
 }
 
+// TODO: gracefully quit the app instead of exit(1)
 int main(int argc, char **argv) {
     GtkApplication *app;
     int status = 0;
