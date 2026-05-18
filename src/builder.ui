@@ -26,7 +26,7 @@
 
             <child>
             <object class="GtkButton" id="battery-button">
-                <property name="label">Battery</property>
+                <property name="icon-name">battery-level-0</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">0</property>
@@ -37,7 +37,7 @@
             </child>
             <child>
             <object class="GtkButton" id="logout-button">
-                <property name="label">Logout</property>
+                <property name="icon-name">system-log-out</property>
                 <layout>
                     <property name="column">1</property>
                     <property name="row">0</property>
@@ -47,19 +47,8 @@
             </object>
             </child>
             <child>
-            <object class="GtkButton" id="reboot-button">
-                <property name="label">Reboot</property>
-                <layout>
-                    <property name="column">2</property>
-                    <property name="row">0</property>
-                    <property name="column-span">1</property>
-                    <property name="row-span">1</property>
-                </layout>
-            </object>
-            </child>
-            <child>
-            <object class="GtkButton" id="shutdown-button">
-                <property name="label">Shutdown</property>
+            <object class="GtkButton" id="power-button">
+                <property name="icon-name">system-shutdown</property>
                 <layout>
                     <property name="column">3</property>
                     <property name="row">0</property>
@@ -72,7 +61,7 @@
             <child> 
             <object class="GtkLabel" id="brightness-scale-label">
                 <property name="label">0</property>
-                <property name="selectable">false</property>
+                <property name="selectable">1</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">1</property>
@@ -84,6 +73,7 @@
             <child> 
             <object class="GtkScale" id="brightness-scale">
                 <property name="adjustment">brightness-adjustment</property>
+                <property name="round-digits">0</property>
                 <layout>
                     <property name="column">1</property>
                     <property name="row">1</property>
@@ -96,7 +86,7 @@
             <child> 
             <object class="GtkLabel" id="volume-scale-label">
                 <property name="label">0</property>
-                <property name="selectable">false</property>
+                <property name="selectable">1</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">2</property>
@@ -108,6 +98,7 @@
             <child> 
             <object class="GtkScale" id="volume-scale">
                 <property name="adjustment">volume-adjustment</property>
+                <property name="round-digits">0</property>
                 <layout>
                     <property name="column">1</property>
                     <property name="row">2</property>
