@@ -18,6 +18,7 @@
                 cmake
                 gcc
                 gtk4
+                icon-library
                 zsh
             ];
 
