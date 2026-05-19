@@ -6,12 +6,12 @@
 #include <string.h>
 
 int get_volume_percent() {
-    char *output =
-        exec_command("wpctl get-volume @DEFAULT_SINK@ | awk '{print $2}'", "r");
+    char output[4000];
+    exec_command(output, sizeof(output),
+                 "wpctl get-volume @DEFAULT_SINK@ | awk '{print $2}'", "r");
 
     float res = atof(output) * 100.0;
 
-    free(output);
     return res;
 }
 
@@ -26,21 +26,21 @@ void set_volume(const int percent) {
     char *command = malloc(PATH_MAX);
     snprintf(command, PATH_MAX, "wpctl set-volume @DEFAULT_SINK@ %i%%", value);
 
-    char *res = exec_command(command, "r");
+    char res[4000];
+    exec_command(res, sizeof(res), command, "r");
 
     free(command);
-    free(res);
 }
 
 bool get_is_muted() {
-    char *output =
-        exec_command("wpctl get-volume @DEFAULT_SINK@ | awk '{print $3}'", "r");
+    char output[4000];
+    exec_command(output, sizeof(output),
+                 "wpctl get-volume @DEFAULT_SINK@ | awk '{print $3}'", "r");
 
     if (strcmp(output, "[MUTED]") == 0) {
         return true;
     }
 
-    free(output);
     return false;
 }
 

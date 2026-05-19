@@ -42,21 +42,16 @@ void write_file(const char *path, const char *content) {
     fclose(f);
 }
 
-char *exec_command(const char *command, const char *modes) {
+void exec_command(char *output, const unsigned int size, const char *command,
+                  const char *modes) {
     FILE *fp;
-    char *path = malloc(PATH_MAX);
 
     fp = popen(command, modes);
     if (fp == NULL) {
         safe_fail("Failed to run command");
     }
 
-    // TODO: what if while never runs
-    while (fgets(path, PATH_MAX, fp) != NULL) {
-        // Only read first line
-        break;
-    }
+    fgets(output, size, fp);
 
     pclose(fp);
-    return path;
 }

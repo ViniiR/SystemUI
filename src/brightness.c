@@ -37,13 +37,13 @@ void handle_brightness(GtkBuilder *builder) {
 //
 
 int get_brightness() {
-    char *brightness = exec_command("brightnessctl get", "r");
-    char *max_brightness = exec_command("brightnessctl max", "r");
+    char brightness[4000];
+    exec_command(brightness, sizeof(brightness), "brightnessctl get", "r");
+    char max_brightness[4000];
+    exec_command(max_brightness, sizeof(brightness), "brightnessctl max", "r");
 
     double percentage = (atof(brightness) / atof(max_brightness) * 100);
 
-    free(brightness);
-    free(max_brightness);
     return (int)percentage;
 }
 
@@ -51,8 +51,8 @@ void set_brightness(const int percent) {
     char *command = malloc(PATH_MAX);
     snprintf(command, PATH_MAX, "brightnessctl set %i%%", percent);
 
-    char *res = exec_command(command, "r");
+    char res[4000];
+    exec_command(res, sizeof(res), command, "r");
 
     free(command);
-    free(res);
 }
