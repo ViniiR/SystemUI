@@ -14,6 +14,8 @@ static void activate(GApplication *app, gpointer *user_data) {
 
     handle_brightness(builder);
     handle_audio(builder);
+    handle_power_buttons(builder);
+    handle_battery(builder);
 }
 
 // TODO: gracefully quit the app instead of exit(1)

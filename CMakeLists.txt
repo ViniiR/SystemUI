@@ -17,6 +17,8 @@ file(GLOB SOURCES
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.20)
 
+find_library(MATH_LIBRARY m)
+
 add_executable(
     ${PROJECT_NAME}
     ${SOURCES}
@@ -29,5 +31,6 @@ target_include_directories(
 
 target_link_libraries(
     ${PROJECT_NAME}
+    PRIVATE ${MATH_LIBRARY}
     PRIVATE PkgConfig::GTK4
 )

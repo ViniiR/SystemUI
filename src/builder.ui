@@ -23,16 +23,39 @@
 
         <child> 
         <object class="GtkGrid" id="main-grid">
+            <property name="column-spacing">10</property>
+            <property name="row-spacing">10</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="column-homogeneous">True</property>
 
             <child>
             <object class="GtkButton" id="battery-button">
-                <property name="icon-name">battery-level-0</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">0</property>
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <child>
+                <object class="GtkBox">
+                    <property name="spacing">6</property>
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+
+                    <child>
+                    <object class="GtkLabel">
+                        <property name="label">0%</property>
+                    </object>
+                    </child>
+                    <child>
+                    <object class="GtkImage">
+                        <property name="icon-name">battery-level-0</property>
+                    </object>
+                    </child>
+                </object>
+                </child>
             </object>
             </child>
             <child>
@@ -47,7 +70,18 @@
             </object>
             </child>
             <child>
-            <object class="GtkButton" id="power-button">
+            <object class="GtkButton" id="reboot-button">
+                <property name="icon-name">system-reboot</property>
+                <layout>
+                    <property name="column">2</property>
+                    <property name="row">0</property>
+                    <property name="column-span">1</property>
+                    <property name="row-span">1</property>
+                </layout>
+            </object>
+            </child>
+            <child>
+            <object class="GtkButton" id="shutdown-button">
                 <property name="icon-name">system-shutdown</property>
                 <layout>
                     <property name="column">3</property>
@@ -61,7 +95,7 @@
             <child> 
             <object class="GtkLabel" id="brightness-scale-label">
                 <property name="label">0</property>
-                <property name="selectable">1</property>
+                <property name="selectable">False</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">1</property>
@@ -86,7 +120,7 @@
             <child> 
             <object class="GtkLabel" id="volume-scale-label">
                 <property name="label">0</property>
-                <property name="selectable">1</property>
+                <property name="selectable">False</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">2</property>

@@ -1,8 +1,9 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-void safe_fail(const char *message) {
+[[noreturn]] void safe_fail(const char *message) {
     perror(message);
     exit(EXIT_FAILURE);
 }
@@ -26,6 +27,8 @@ char *read_file(const char *path) {
         fclose(f);
         safe_fail("Failed to read file content");
     }
+    // Remove trailing newlines
+    value[strcspn(value, "\r\n")] = 0;
 
     fclose(f);
     return value;
