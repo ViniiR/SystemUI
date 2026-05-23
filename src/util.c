@@ -54,7 +54,10 @@ void exec_command(char *output, const unsigned int size, const char *command,
         safe_fail("Failed to run command");
     }
 
-    fgets(output, size, fp);
+    if (fgets(output, size, fp) == NULL) {
+        pclose(fp);
+        safe_fail("Could not read file");
+    }
 
     pclose(fp);
 }

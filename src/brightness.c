@@ -48,11 +48,9 @@ int get_brightness() {
 }
 
 void set_brightness(const int percent) {
-    char *command = malloc(PATH_MAX);
+    char command[PATH_MAX];
     snprintf(command, PATH_MAX, "brightnessctl set %i%%", percent);
 
     char res[4000];
     exec_command(res, sizeof(res), command, "r");
-
-    free(command);
 }

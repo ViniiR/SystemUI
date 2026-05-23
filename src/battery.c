@@ -44,46 +44,25 @@ void get_battery_directory(char *output, const unsigned int size) {
 }
 
 int get_battery_percentage() {
-    DIR *dir;
-    struct dirent *entry;
+    char directory[PATH_MAX];
+    get_battery_directory(directory, sizeof(directory));
 
-    // TODO: get_battery_directory()
-    dir = opendir(power_supply);
-    if (dir == NULL) {
-        safe_fail("Failed to open directory");
-    }
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') {
-            continue;
-        }
+    char full_capacity[PATH_MAX];
+    snprintf(full_capacity, sizeof(full_capacity), "%s%s", directory, energy_full);
 
-        char start[3 + 1];
-        snprintf(start, sizeof(start), "%.3s", entry->d_name);
+    char now_capacity[PATH_MAX];
+    snprintf(now_capacity, sizeof(now_capacity), "%s%s", directory, energy_now);
 
-        if (strcmp(start, "BAT") == 0) {
-            char full_capacity[PATH_MAX];
-            snprintf(full_capacity, PATH_MAX, "%s/%s/%s", power_supply,
-                     entry->d_name, energy_full);
+    char *full = read_file(full_capacity);
+    int full_number = atoi(full);
+    char *now = read_file(now_capacity);
+    int now_number = atoi(now);
 
-            char now_capacity[PATH_MAX];
-            snprintf(now_capacity, PATH_MAX, "%s/%s/%s", power_supply,
-                     entry->d_name, energy_now);
+    int value = (int)round(((double)now_number / (double)full_number) * 100.0);
 
-            char *full = read_file(full_capacity);
-            int full_number = atoi(full);
-            char *now = read_file(now_capacity);
-            int now_number = atoi(now);
-
-            int value =
-                (int)round(((double)now_number / (double)full_number) * 100.0);
-
-            // Ignore other batteries
-            free(full);
-            free(now);
-            return value;
-        }
-    }
-    return -1;
+    free(full);
+    free(now);
+    return value;
 }
 
 bool get_conservation_mode() {
@@ -105,7 +84,7 @@ typedef enum { CHARGING, DISCHARGING, PLUGGED_IN } ChargingStatus;
 
 ChargingStatus get_charging_status() {
     char directory[PATH_MAX];
-    get_battery_directory(directory, PATH_MAX);
+    get_battery_directory(directory, sizeof(directory));
 
     char filepath[PATH_MAX + sizeof(status)];
     snprintf(filepath, sizeof(filepath), "%s%s", directory, status);
@@ -129,7 +108,6 @@ void get_battery_icon(char *output, const unsigned int size) {
     static const char battery_prefix[] = "battery-level-";
 
     int alloc_size = 1;
-
     char *suffix;
     switch (get_charging_status()) {
     case CHARGING:
