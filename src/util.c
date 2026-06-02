@@ -51,12 +51,19 @@ void exec_command(char *output, const unsigned int size, const char *command,
 
     fp = popen(command, modes);
     if (fp == NULL) {
-        safe_fail("Failed to run command");
+        char error_message[PATH_MAX];
+        snprintf(error_message, sizeof(error_message),
+                 "Failed to execute Command: '%s'", command);
+        safe_fail(error_message);
     }
 
-    if (fgets(output, size, fp) == NULL) {
+    // ignore 
+    if (output != NULL && fgets(output, size, fp) == NULL) {
         pclose(fp);
-        safe_fail("Could not read file");
+        char error_message[PATH_MAX];
+        snprintf(error_message, sizeof(error_message),
+                 "Could not read file, Command: '%s'", command);
+        safe_fail(error_message);
     }
 
     pclose(fp);

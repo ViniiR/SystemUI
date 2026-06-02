@@ -26,8 +26,7 @@ void set_volume(const int percent) {
     char command[PATH_MAX];
     snprintf(command, PATH_MAX, "wpctl set-volume @DEFAULT_SINK@ %i%%", value);
 
-    char res[4000];
-    exec_command(res, sizeof(res), command, "r");
+    exec_command(NULL, 0, command, "r");
 }
 
 bool get_is_muted() {
