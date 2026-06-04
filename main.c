@@ -5,9 +5,10 @@
 static void activate(GApplication *app, gpointer *user_data) {
     // THAT'S THE MOST ABSURD THING I'VE EVER SEEN AAHHHH
     setlocale(LC_NUMERIC, "C");
-    GtkBuilder *builder = gtk_builder_new_from_file("../src/builder.ui");
 
+    GtkBuilder *builder = gtk_builder_new_from_file("../src/builder.ui");
     GtkWidget *win = GTK_WIDGET(gtk_builder_get_object(builder, "main-window"));
+    GtkCssProvider *css_provider = gtk_css_provider_new();
 
     gtk_window_set_application(GTK_WINDOW(win), GTK_APPLICATION(app));
     gtk_window_present(GTK_WINDOW(win));
@@ -16,9 +17,16 @@ static void activate(GApplication *app, gpointer *user_data) {
     handle_audio(builder);
     handle_power_buttons(builder);
     handle_battery(builder);
+    handle_conservation_mode(builder);
+
+    gtk_css_provider_load_from_path(css_provider, "../src/style.css");
+
+    GdkDisplay *display = gdk_display_get_default();
+    gtk_style_context_add_provider_for_display(
+        display, GTK_STYLE_PROVIDER(css_provider),
+        GTK_STYLE_PROVIDER_PRIORITY_USER);
 }
 
-// TODO: gracefully quit the app instead of exit(1)
 int main(int argc, char **argv) {
     GtkApplication *app;
     int status = 0;

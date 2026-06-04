@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: gracefully quit the app instead of exit(1)
 [[noreturn]] void safe_fail(const char *message) {
     perror(message);
     exit(EXIT_FAILURE);

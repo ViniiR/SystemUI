@@ -1,0 +1,9 @@
+.button-inactive {
+    background-color: grey;
+    color: white;
+}
+
+.button-active {
+    background-color: blue;
+    color: black;
+}

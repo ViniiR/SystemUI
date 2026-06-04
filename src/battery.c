@@ -164,7 +164,6 @@ gboolean handle_battery_change(void *data) {
 
     char text[10];
 
-    // TODO:
     snprintf(text, sizeof(text), "%.0f%%", (double)get_battery_percentage());
 
     gtk_label_set_label(GTK_LABEL(label), text);
