@@ -1,56 +1,98 @@
-#include "util.h"
+#include "types.h"
 #include <gtk/gtk.h>
-#include <stdio.h>
-#include <stdlib.h>
 
-int get_brightness();
+typedef struct {
+    GDBusConnection *connection;
+    GtkLabel *label;
+} SetterData;
 
-void set_brightness(const int percent);
-
-//
-
-void handle_brightness_change(GtkRange *scale, gpointer data) {
-
-    GtkLabel *label = GTK_LABEL(data);
+static void handle_brightness_change(GtkRange *scale, gpointer data) {
+    SetterData *setter_data = (SetterData *)data;
 
     double value = gtk_range_get_value(scale);
     char *str = g_strdup_printf("%3.0f", value);
 
-    gtk_label_set_label(label, str);
-    set_brightness((int)value);
+    gtk_label_set_label(setter_data->label, str);
+
+    g_dbus_connection_call(
+        setter_data->connection,
+        "com.vinii.SysUiDaemon",
+        "/com/vinii/BrightnessController",
+        "com.vinii.BrightnessController",
+        "SetBrightness",
+        g_variant_new("(i)", (gint)value),
+        NULL,
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        NULL,
+        NULL
+    );
 
     g_free(str);
 }
 
-void handle_brightness(GtkBuilder *builder) {
+static void dbus_get_brightness(
+    GObject *obj, GAsyncResult *res, gpointer data
+) {
+    GDBusConnection *conn = G_DBUS_CONNECTION(obj);
+    GError *error = NULL;
+    GtkRange *scale = GTK_RANGE(data);
+
+    GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
+
+    if (!result) {
+        g_warning("DBus get brightness failed, %s", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    gint32 brightness;
+    g_variant_get(result, "(i)", &brightness);
+
+    gtk_range_set_value(scale, brightness);
+
+    g_variant_unref(result);
+}
+
+void handle_brightness(GtkBuilder *builder, State *state) {
     GtkLabel *label =
         GTK_LABEL(gtk_builder_get_object(builder, "brightness-scale-label"));
     GtkScale *scale =
         GTK_SCALE(gtk_builder_get_object(builder, "brightness-scale"));
 
-    g_signal_connect(scale, "value-changed",
-                     G_CALLBACK(handle_brightness_change), label);
-    // Set initial value, also calls handle_brightness_change()
-    gtk_range_set_value(GTK_RANGE(scale), get_brightness());
-}
+    if (G_UNLIKELY(state->connection == NULL)) {
+        g_error("DBus connection unavailable");
+        return;
+    }
 
-//
+    SetterData *setter_data = g_new0(SetterData, 1);
+    setter_data->connection = state->connection;
+    setter_data->label = label;
 
-int get_brightness() {
-    char brightness[4000];
-    exec_command(brightness, sizeof(brightness), "brightnessctl get", "r");
-    char max_brightness[4000];
-    exec_command(max_brightness, sizeof(brightness), "brightnessctl max", "r");
+    g_signal_connect(
+        scale,
+        "value-changed",
+        G_CALLBACK(handle_brightness_change),
+        setter_data
+    );
 
-    double percentage = (atof(brightness) / atof(max_brightness) * 100);
+    g_object_set_data_full(
+        G_OBJECT(scale), "setter-data-cleanup", setter_data, g_free
+    );
 
-    return (int)percentage;
-}
-
-void set_brightness(const int percent) {
-    char command[PATH_MAX];
-    snprintf(command, PATH_MAX, "brightnessctl set %i%%", percent);
-
-    char res[4000];
-    exec_command(res, sizeof(res), command, "r");
+    g_dbus_connection_call(
+        state->connection,
+        "com.vinii.SysUiDaemon",
+        "/com/vinii/BrightnessController",
+        "com.vinii.BrightnessController",
+        "GetBrightness",
+        NULL,
+        G_VARIANT_TYPE("(i)"),
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        dbus_get_brightness,
+        scale
+    );
 }

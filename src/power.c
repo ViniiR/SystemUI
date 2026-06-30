@@ -1,24 +1,5 @@
-#include "util.h"
 #include <gtk/gtk.h>
 #include <stdio.h>
-
-void handle_reboot(GtkButton *button, gpointer data) {
-    char res[4000];
-    exec_command(res, sizeof(res), "systemctl reboot", "r");
-}
-
-void handle_shutdown(GtkButton *button, gpointer data) {
-    char res[4000];
-    exec_command(res, sizeof(res), "systemctl poweroff", "r");
-}
-void handle_logout() {
-    char res[4000];
-    perror("BRUV INNNIT");
-    // TODO: might be DE/WM specific
-    // exec_command(res, sizeof(res), "systemctl ", "r");
-}
-
-//
 
 void handle_power_buttons(GtkBuilder *builder) {
     GtkButton *reboot_button =

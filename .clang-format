@@ -1,3 +1,18 @@
+Language: C
+BasedOnStyle: LLVM
+
 IndentWidth: 4
 UseTab: Never
 AccessModifierOffset: -4
+
+BinPackParameters: false
+BinPackArguments: false
+AlignAfterOpenBracket: BlockIndent
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: false
+
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 1000

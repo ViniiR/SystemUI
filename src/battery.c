@@ -1,108 +1,10 @@
-#include "dirent.h"
-#include "util.h"
-#include <glib.h>
 #include <gtk/gtk.h>
-#include <gtk/gtkshortcut.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "types.h"
 
-static const char power_supply[] = "/sys/class/power_supply";
-static const char capacity[] = "/capacity";
-static const char energy_full[] = "/energy_full";
-static const char energy_now[] = "/energy_now";
-static const char status[] = "/status";
-
-// TODO:
-static int battery_dir_name = -1;
-
-void get_battery_directory(char *output, const unsigned int size) {
-    DIR *dir;
-    struct dirent *entry;
-
-    dir = opendir(power_supply);
-    if (dir == NULL) {
-        safe_fail("Failed to open directory");
-    }
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_name[0] == '.') {
-            continue;
-        }
-
-        char start[3 + 1];
-        snprintf(start, sizeof(start), "%.3s", entry->d_name);
-
-        if (strcmp(start, "BAT") == 0) {
-            snprintf(output, size, "%s/%s", power_supply, entry->d_name);
-
-            // Stop at first battery
-            return;
-        }
-    }
-    safe_fail("Failed to read directory");
-}
-
-int get_battery_percentage() {
-    char directory[PATH_MAX];
-    get_battery_directory(directory, sizeof(directory));
-
-    char full_capacity[PATH_MAX];
-    snprintf(full_capacity, sizeof(full_capacity), "%s%s", directory, energy_full);
-
-    char now_capacity[PATH_MAX];
-    snprintf(now_capacity, sizeof(now_capacity), "%s%s", directory, energy_now);
-
-    char *full = read_file(full_capacity);
-    int full_number = atoi(full);
-    char *now = read_file(now_capacity);
-    int now_number = atoi(now);
-
-    int value = (int)round(((double)now_number / (double)full_number) * 100.0);
-
-    free(full);
-    free(now);
-    return value;
-}
-
-bool get_conservation_mode() {
-    static const char filepath[] =
-        "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode";
-
-    char *res = read_file(filepath);
-    bool is_enabled = false;
-
-    if (atoi(res) == 1) {
-        is_enabled = true;
-    }
-
-    free(res);
-    return is_enabled;
-}
-
-typedef enum { CHARGING, DISCHARGING, PLUGGED_IN } ChargingStatus;
-
-ChargingStatus get_charging_status() {
-    char directory[PATH_MAX];
-    get_battery_directory(directory, sizeof(directory));
-
-    char filepath[PATH_MAX + sizeof(status)];
-    snprintf(filepath, sizeof(filepath), "%s%s", directory, status);
-
-    char *output = read_file(filepath);
-
-    ChargingStatus status = CHARGING;
-    if (strcmp(output, "Not charging") == 0) {
-        status = PLUGGED_IN;
-    } else if (strcmp(output, "Discharging") == 0) {
-        status = DISCHARGING;
-    }
-
-    free(output);
-    return status;
-}
-
-void get_battery_icon(char *output, const unsigned int size) {
+static void get_battery_icon(char *output, const unsigned int size) {
     static const char plugged[] = "-plugged-in";
     static const char charging[] = "-charging";
     static const char battery_prefix[] = "battery-level-";
@@ -151,14 +53,14 @@ void get_battery_icon(char *output, const unsigned int size) {
     free(suffix);
 }
 
-gboolean handle_battery_change(void *data) {
+static gboolean handle_battery_change(void *data) {
     GtkButton *button = GTK_BUTTON(data);
     GtkBox *box = GTK_BOX(gtk_button_get_child(button));
 
     char icon_name[4000];
     get_battery_icon(icon_name, sizeof(icon_name));
 
-    // Hardcoded
+    // TODO: Hardcoded
     GtkWidget *label = gtk_widget_get_first_child(GTK_WIDGET(box));
     GtkWidget *image = gtk_widget_get_next_sibling(GTK_WIDGET(label));
 
