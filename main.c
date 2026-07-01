@@ -19,7 +19,7 @@ static void activate(GApplication *app, gpointer *data) {
 
     handle_brightness(builder, state);
     // handle_audio(builder);
-    handle_power_buttons(builder);
+    handle_power_buttons(builder, state);
     handle_battery(builder);
     handle_conservation_mode(builder);
     handle_boost_mode(builder);

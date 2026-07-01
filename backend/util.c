@@ -47,11 +47,9 @@ void write_file(const char *path, const char *content) {
 }
 
 void exec_command(
-    char *output,
-    const unsigned int size,
-    const char *command,
-    const char *modes
-) {
+    char *output, const unsigned int size,
+    const char *command, const char *modes)
+{
     FILE *fp;
 
     fp = popen(command, modes);
