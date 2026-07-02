@@ -1,5 +1,5 @@
 {
-    inputs.nixpkgs.url = "github:nixos/nixpkgs/afbbf774e2087c3d734266c22f96fca2e78d3620";
+    inputs.nixpkgs.url = "github:nixos/nixpkgs/95ca1e203c0750115fd4a6f17d5a245dfe6b1edd";
     outputs = {
         self,
         nixpkgs,
@@ -12,12 +12,17 @@
             NIX_ENFORCE_PURITY = 0;
             LD_LIBRARY_PATH = lib.makeLibraryPath packages;
 
+            RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+
             # Packages available in the User's shell
             packages = with pkgs; [
                 pkg-config
                 cmake
                 gcc
                 gtk4
+                rustc
+                cargo
+                rust-analyzer
                 icon-library
                 zsh
             ];
