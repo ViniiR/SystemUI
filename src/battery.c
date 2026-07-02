@@ -1,9 +1,12 @@
+#include "types.h"
+#include <glib.h>
+#include <glibconfig.h>
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
 
+// TODO: this should be backend
 static void get_battery_icon(char *output, const unsigned int size) {
     static const char plugged[] = "-plugged-in";
     static const char charging[] = "-charging";
@@ -45,19 +48,62 @@ static void get_battery_icon(char *output, const unsigned int size) {
 
     char suffix_len = strlen(suffix);
 
-    int inner_len = (sizeof(battery_prefix) + sizeof(battery_level_formatted) +
-                     sizeof(char) * suffix_len);
+    int inner_len =
+        (sizeof(battery_prefix) + sizeof(battery_level_formatted) +
+         sizeof(char) * suffix_len);
 
-    snprintf(output, size > inner_len ? size : inner_len, "%s%i%s",
-             battery_prefix, battery_level_formatted, suffix);
+    snprintf(
+        output,
+        size > inner_len ? size : inner_len,
+        "%s%i%s",
+        battery_prefix,
+        battery_level_formatted,
+        suffix
+    );
     free(suffix);
 }
 
-static gboolean handle_battery_change(void *data) {
+static void dbus_set_battery_display(
+    GObject *obj, GAsyncResult *parameter, gpointer data
+) {
+    GDBusConnection *conn = G_DBUS_CONNECTION(obj);
+    GError *error = NULL;
+
     GtkButton *button = GTK_BUTTON(data);
+    GtkBox *box = GTK_BOX(gtk_button_get_child(button));
+    GtkWidget *label = gtk_widget_get_first_child(GTK_WIDGET(box));
+    GtkWidget *image = gtk_widget_get_next_sibling(GTK_WIDGET(label));
+
+    GVariant *result = g_dbus_connection_call_finish(conn, parameter, &error);
+
+    if (!result) {
+        g_warning("DBus get battery label failed, %s", error->message);
+        g_clear_error(&error);
+        return;
+    }
+
+    const char *icon = NULL;
+    const char *text = NULL;
+    g_variant_get(result, "(&s&s)", &icon, &text);
+
+    gtk_image_set_from_icon_name(GTK_IMAGE(image), icon);
+    gtk_label_set_label(GTK_LABEL(label), text);
+
+    g_variant_unref(result);
+}
+
+typedef struct {
+    GDBusConnection *connection;
+    GtkButton *button;
+} GetterData;
+
+static gboolean handle_battery_change(void *data) {
+    GetterData *getter_data = (GetterData *)data;
+    GtkButton *button = getter_data->button;
     GtkBox *box = GTK_BOX(gtk_button_get_child(button));
 
     char icon_name[4000];
+    // TODO:
     get_battery_icon(icon_name, sizeof(icon_name));
 
     // TODO: Hardcoded
@@ -68,6 +114,21 @@ static gboolean handle_battery_change(void *data) {
 
     snprintf(text, sizeof(text), "%.0f%%", (double)get_battery_percentage());
 
+    g_dbus_connection_call(
+        getter_data->connection,
+        "com.vinii.SysUiDaemon",
+        "/com/vinii/BatteryController",
+        "com.vinii.BatteryController",
+        "GetBatteryDisplay",
+        NULL,
+        G_VARIANT_TYPE("(ss)"), // Return whole string: Level + % and icon name
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        dbus_set_battery_display,
+        button
+    );
+
     gtk_label_set_label(GTK_LABEL(label), text);
     gtk_image_set_from_icon_name(GTK_IMAGE(image), icon_name);
 
@@ -75,7 +136,7 @@ static gboolean handle_battery_change(void *data) {
     return TRUE;
 }
 
-void handle_battery(GtkBuilder *builder) {
+void handle_battery(GtkBuilder *builder, State *state) {
     GtkButton *battery_button =
         GTK_BUTTON(gtk_builder_get_object(builder, "battery-button"));
 

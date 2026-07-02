@@ -33,17 +33,17 @@ static void handle_brightness_change(GtkRange *scale, gpointer data) {
 }
 
 static void dbus_get_brightness(
-    GObject *obj, GAsyncResult *res, gpointer data
+    GObject *obj, GAsyncResult *parameter, gpointer data
 ) {
     GDBusConnection *conn = G_DBUS_CONNECTION(obj);
     GError *error = NULL;
     GtkRange *scale = GTK_RANGE(data);
 
-    GVariant *result = g_dbus_connection_call_finish(conn, res, &error);
+    GVariant *result = g_dbus_connection_call_finish(conn, parameter, &error);
 
     if (!result) {
         g_warning("DBus get brightness failed, %s", error->message);
-        g_error_free(error);
+        g_clear_error(&error);
         return;
     }
 

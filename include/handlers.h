@@ -9,7 +9,7 @@ void handle_audio(GtkBuilder *builder);
 
 void handle_power_buttons(GtkBuilder *builder, State *state);
 
-void handle_battery(GtkBuilder *builder);
+void handle_battery(GtkBuilder *builder, State *state);
 
 void handle_conservation_mode(GtkBuilder *builder);
 
