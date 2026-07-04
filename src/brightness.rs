@@ -5,15 +5,15 @@ use gtk::{
     Builder, Label, Scale,
 };
 
-use crate::DAEMON_NAME;
+use crate::{types::HandlerError, DAEMON_NAME};
 
 // TODO: type define errors
-pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), ()> {
+pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError> {
     let Some(scale) = builder.object::<Scale>("brightness-scale") else {
-        return Err(());
+        return Err(HandlerError::ObjectError);
     };
     let Some(label) = builder.object::<Label>("brightness-scale-label") else {
-        return Err(());
+        return Err(HandlerError::ObjectError);
     };
 
     scale.connect_value_changed(glib::clone!(
@@ -28,10 +28,9 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
 
             conn.call(
                 Some(DAEMON_NAME),
-                "com.vinii.BrightnessController",
+                "com/vinii/BrightnessController",
                 "com.vinii.BrightnessController",
                 "SetBrightness",
-                // TODO: may need to be a tuple
                 Some(&value.to_variant()),
                 None,
                 DBusCallFlags::NONE,

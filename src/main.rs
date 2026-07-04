@@ -1,10 +1,9 @@
-use std::rc::Rc;
-
 use gtk::{gdk::Display, glib::g_error};
 use gtk::{gio, glib, Application, ApplicationWindow};
 use gtk::{prelude::*, CssProvider};
 
 mod brightness;
+mod types;
 
 pub const DAEMON_NAME: &'static str = "VGSBackend";
 
@@ -30,19 +29,20 @@ fn main() -> glib::ExitCode {
 
 fn activate(app: &Application) {
     let builder = gtk::Builder::from_file("src/ui/builder.ui");
-    let window: ApplicationWindow = builder
-        .object("main-window")
-        .expect("Failed to access main-window in builder.ui");
+    let Some(window) = builder.object::<ApplicationWindow>("main-window") else {
+        g_error!(None, "Failed to get builder main-window");
+        return;
+    };
 
     // TODO: improve error handling
     glib::MainContext::default().spawn_local(async move {
         let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::Session).await else {
-            g_error!("Error:", "Failed to connect with DBus");
+            g_error!(None, "Failed to connect with DBus");
             return;
         };
 
-        let Ok(_) = brightness::handle_brightness(&builder, dbus_connection.clone()) else {
-            g_error!("Error:", "Failed to get Scale");
+        if let Err(e) = brightness::handle_brightness(&builder, dbus_connection.clone()) {
+            g_error!(None, "Brightness error: {:?}", e);
             return;
         };
     });
