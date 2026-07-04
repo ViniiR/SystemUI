@@ -5,7 +5,10 @@ use gtk::{
     Builder, Label, Scale,
 };
 
-use crate::{types::HandlerError, DAEMON_NAME};
+use crate::{
+    types::{DBusObjects, HandlerError},
+    DAEMON_NAME, DBUS_INTERFACE,
+};
 
 // TODO: type define errors
 pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError> {
@@ -27,9 +30,10 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
             label.set_text(&value.to_string());
 
             conn.call(
-                Some(DAEMON_NAME),
-                "com/vinii/BrightnessController",
-                "com.vinii.BrightnessController",
+                DAEMON_NAME,
+                DBusObjects::BrightnessController.as_str(),
+                DBUS_INTERFACE,
+                // TODO: type define these values
                 "SetBrightness",
                 Some(&value.to_variant()),
                 None,

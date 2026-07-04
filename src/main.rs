@@ -5,12 +5,13 @@ use gtk::{prelude::*, CssProvider};
 mod brightness;
 mod types;
 
-pub const DAEMON_NAME: &'static str = "VGSBackend";
+pub const PROGRAM_NAME: &str = "com.vinii.vgs";
+
+pub const DAEMON_NAME: Option<&str> = Some("VGSBackend");
+pub const DBUS_INTERFACE: &str = "com.vinii.VGSController";
 
 fn main() -> glib::ExitCode {
-    let app = Application::builder()
-        .application_id("com.vinii.vgs")
-        .build();
+    let app = Application::builder().application_id(PROGRAM_NAME).build();
 
     app.connect_startup(|_| {
         let provider = CssProvider::new();
