@@ -7,9 +7,6 @@ mod types;
 
 pub const PROGRAM_NAME: &str = "com.vinii.vgs";
 
-pub const DAEMON_NAME: Option<&str> = Some("VGSBackend");
-pub const DBUS_INTERFACE: &str = "com.vinii.VGSController";
-
 fn main() -> glib::ExitCode {
     let app = Application::builder().application_id(PROGRAM_NAME).build();
 

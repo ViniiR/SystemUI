@@ -5,10 +5,8 @@ use gtk::{
     Builder, Label, Scale,
 };
 
-use crate::{
-    types::{DBusObjects, HandlerError},
-    DAEMON_NAME, DBUS_INTERFACE,
-};
+use crate::types::dbus;
+use crate::types::HandlerError;
 
 // TODO: type define errors
 pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError> {
@@ -30,19 +28,18 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
             label.set_text(&value.to_string());
 
             conn.call(
-                DAEMON_NAME,
-                DBusObjects::BrightnessController.as_str(),
-                DBUS_INTERFACE,
-                // TODO: type define these values
-                "SetBrightness",
+                dbus::DAEMON_NAME,
+                dbus::Controllers::BRIGHTNESS,
+                dbus::INTERFACE,
+                dbus::Methods::SET_BRIGHTNESS,
                 Some(&value.to_variant()),
                 None,
                 DBusCallFlags::NONE,
-                -1,
+                dbus::Timeout::NONE,
                 gio::Cancellable::NONE,
                 |res| {
                     if let Err(e) = res {
-                        g_warning!(None, "DBus call error: {:?}", e);
+                        g_warning!(None, "DBus call error: {e:?}");
                     }
                 },
             );
