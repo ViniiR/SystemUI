@@ -40,7 +40,7 @@ fn activate(app: &Application) {
         };
 
         if let Err(e) = brightness::handle_brightness(&builder, dbus_connection.clone()) {
-            g_error!(None, "Brightness error: {:?}", e);
+            g_error!(None, "Brightness error: {e:?}");
             return;
         };
     });
