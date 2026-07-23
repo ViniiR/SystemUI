@@ -21,6 +21,7 @@
                 gcc
                 gtk4
                 rustc
+                systemd
                 cargo
                 rust-analyzer
                 icon-library

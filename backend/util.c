@@ -1,4 +1,3 @@
-#include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +53,7 @@ void exec_command(
 
     fp = popen(command, modes);
     if (fp == NULL) {
-        char error_message[PATH_MAX];
+        char error_message[4096];
         snprintf(
             error_message,
             sizeof(error_message),
@@ -67,7 +66,7 @@ void exec_command(
     // ignore
     if (output != NULL && fgets(output, size, fp) == NULL) {
         pclose(fp);
-        char error_message[PATH_MAX];
+        char error_message[4096];
         snprintf(
             error_message,
             sizeof(error_message),
