@@ -1,4 +1,4 @@
-#include "controllers.h"
+#include "brightness.h"
 #include <stdio.h>
 #include <string.h>
 #include <systemd/sd-bus.h>
@@ -13,9 +13,9 @@ static int fail_with_message(const char message[], sd_bus *p, const int code);
 int main(int argc, char **argv) {
     int err = 0;
 
-    err = sd_bus_default_user(&p_dbus);
+    err = sd_bus_open_system(&p_dbus);
     if (err != 0)
-        return fail_with_message("Failed to connect to user bus", p_dbus, err);
+        return fail_with_message("Failed to connect to bus", p_dbus, err);
 
     err = sd_bus_add_object_vtable(
         p_dbus,

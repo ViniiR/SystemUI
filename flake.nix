@@ -7,7 +7,86 @@
         system = "x86_64-linux";
         pkgs = import nixpkgs {inherit system;};
         lib = pkgs.lib;
+        daemon_name = "com.vinii.VGSController";
+        binary_name = "vgscontroller";
     in {
+        packages.${system}.default = pkgs.stdenv.mkDerivation rec {
+            pname = binary_name;
+            version = "0.1";
+
+            src = ./.;
+
+            nativeBuildInputs = with pkgs; [
+                pkg-config
+                cmake
+                gcc
+
+                # rustc
+                # cargo
+            ];
+            buildInputs = with pkgs; [
+                systemd
+                dbus
+            ];
+
+            installPhase = ''
+                runHook preInstall
+
+                mkdir -p $out/bin
+                mv system_ui $out/bin/${pname}
+
+                runHook postInstall
+            '';
+
+            postInstall = ''
+                # mkdir -p $out/share/dbus-1/system-services
+                # cat <<END > $out/share/dbus-1/system-services/${daemon_name}.service
+                # [D-BUS Service]
+                # Name=${daemon_name}
+                # Exec=$out/bin/${pname}
+                # User=root
+                # SystemdService=${pname}.service
+                # END
+
+                # mkdir -p $out/share/dbus-1/system.d
+                # cp ${./dbus.conf.xml} $out/share/dbus-1/system.d/${daemon_name}.conf
+                #
+                # mkdir -p $out/lib/systemd/system
+                # cat <<END > $out/lib/systemd/system/${pname}.service
+                # [Unit]
+                # Description=VGSController Daemon
+                # After=dbus.service
+                #
+                # [Service]
+                # Type=dbus
+                # BusName=${daemon_name}
+                # ExecStart=$out/bin/${pname}
+                # Restart=always
+                #
+                # [Install]
+                # WantedBy=multi-user.target
+                # END
+            '';
+        };
+        nixosModules.default = {...} @ args: let
+            package = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        in {
+            # services.dbus.packages = [package];
+            # environment.systemPackages = [package];
+
+            # systemd.services.${binary_name} = {
+            #     description = "VGSController Daemon";
+            #     wantedBy = ["multi-user.target"];
+            #     after = ["dbus.service"];
+            #     wants = ["dbus.service"];
+            #     serviceConfig = {
+            #         Type = "dbus";
+            #         BusName = daemon_name;
+            #         ExecStart = "${package}/bin/${binary_name}";
+            #         Restart = "always";
+            #     };
+            # };
+        };
         devShells.${system}.default = pkgs.mkShell rec {
             NIX_ENFORCE_PURITY = 0;
             LD_LIBRARY_PATH = lib.makeLibraryPath packages;
