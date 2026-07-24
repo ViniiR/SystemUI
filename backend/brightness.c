@@ -26,6 +26,7 @@ int set_brightness_handler(
 
     return sd_bus_reply_method_return(p_msg, NULL);
 }
+
 int get_brightness_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {

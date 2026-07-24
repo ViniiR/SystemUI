@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<!-- <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd"> -->
 <busconfig>
+    <!-- Owner -->
     <policy user="root">
         <allow own="com.vinii.VGSController" />
         <allow send_destination="com.vinii.VGSController" />
+        <allow receive_sender="com.vinii.VGSController" />
     </policy>
+    <!-- User -->
     <policy context="default">
-        <allow own="com.vinii.VGSController" />
         <allow send_destination="com.vinii.VGSController" />
     </policy>
 </busconfig>
