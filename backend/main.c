@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
         return fail_with_message("Failed to connect to bus", p_dbus, err);
     printf("Connected to bus\n");
 
+    // Brightness Controller
     err = sd_bus_add_object_vtable(
         p_dbus,
         NULL,
