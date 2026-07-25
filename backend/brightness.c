@@ -186,9 +186,7 @@ static void set_brightness(const unsigned int percent, const char *filepath) {
 static ResultVoid set_brightness_all(const unsigned int percent) {
     DIR *dir;
     struct dirent *entry;
-    ResultVoid res = {
-        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL
-    };
+    ResultVoid res = RESULT_VOID_DEFAULT;
 
     dir = opendir(BACKLIGHT_PATH);
     if (dir == NULL) {

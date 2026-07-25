@@ -25,3 +25,6 @@ RESULT(int, Int)
 RESULT(char *, String)
 
 #define RESULT_ERR_MSG_UNKNOWN "Unknown error"
+
+#define RESULT_VOID_DEFAULT                                                    \
+    {.variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL};

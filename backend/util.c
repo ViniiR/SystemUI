@@ -71,9 +71,7 @@ ResultVoid exec_command(
 ) {
     static thread_local char error_message[4096];
 
-    ResultVoid res = {
-        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL
-    };
+    ResultVoid res = RESULT_VOID_DEFAULT;
     FILE *fp;
 
     fp = popen(command, modes);
