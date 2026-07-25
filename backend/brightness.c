@@ -192,7 +192,7 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
 
     dir = opendir(BACKLIGHT_PATH);
     if (dir == NULL) {
-        res.err_msg = "Failed to open directory.";
+        res.err_msg = "Failed to open directory";
         return res;
     }
 
