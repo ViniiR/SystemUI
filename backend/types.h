@@ -1,12 +1,18 @@
 #pragma once
 
-#include <stdlib.h>
-
 typedef enum { OK, ERR } ResultVariant;
 
-/// WARNING: 
-/// T ok_value Can be NULL
-/// char *err_msg Can be NULL, Beware.
+/// INFO:
+/// T ok_value Can be NULLable.
+/// char *err_msg Can be NULLable.
+///
+/// How to use them properly:
+/// When 'variant' is ERR:
+/// | define 'err_msg' to a string,
+/// | define 'ok_value' to an empty value to satisfy the compiler.
+/// When 'variant' is OK:
+/// | define 'err_msg' to "",
+/// | define 'ok_value' to the intended result.
 #define RESULT(T, Name)                                                        \
     typedef struct {                                                           \
         ResultVariant variant;                                                 \

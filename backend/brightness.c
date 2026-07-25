@@ -3,6 +3,8 @@
 #include "types.h"
 #include "util.h"
 #include <dirent.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <systemd/sd-bus.h>
 
@@ -49,7 +51,9 @@ int set_brightness_handler(
     res = sd_bus_message_read(p_msg, "u", &value);
     if (res < 0) {
         return sd_bus_error_setf(
-            p_reterror, SD_BUS_ERROR_INVALID_ARGS, "Expected uint32_t value"
+            p_reterror,
+            SD_BUS_ERROR_INVALID_ARGS,
+            "Expected uint32_t percentage"
         );
     }
 
@@ -77,64 +81,91 @@ int set_brightness_handler(
 int get_brightness_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    // TODO:
-    return 0;
+    ResultInt result = get_brightness();
+    if (result.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to get brightness, Error: %s",
+            result.err_msg
+        );
+    }
+
+    return sd_bus_reply_method_return(p_msg, "u", result.ok_value);
 }
 
 //
 
-static const char PATH[] = "/sys/class/backlight";
-static const char MAX[] = "/max_brightness";
-static const char BRIGHTNESS[] = "/brightness";
+static const char BACKLIGHT_PATH[] = "/sys/class/backlight";
+static const char MAX_BRIGHTNESS_PATH[] = "/max_brightness";
+static const char CURRENT_BRIGHTNESS_PATH[] = "/brightness";
 
 static ResultInt get_brightness() {
     DIR *dir;
     struct dirent *entry;
-    ResultInt res = {.variant = ERR, .err_msg = NULL, .ok_value = NULL};
+    ResultInt res = {.variant = ERR, .err_msg = NULL, .ok_value = 0};
 
-    dir = opendir(PATH);
+    dir = opendir(BACKLIGHT_PATH);
     if (dir == NULL) {
         res.err_msg = "Failed to open directory";
         return res;
     }
 
+    // Operates on the first file it finds that doesn't start with '.'
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_name[0] == '.') {
             continue;
         }
 
-        char *filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            res.err_msg = "Failed to alloc";
-            return res;
-        }
+        char *filepath;
 
-        // Operate on the first file it finds
-        snprintf(filepath, PATH_MAX, "%s/%s%s", PATH, entry->d_name, MAX);
-        char *max_brightness = read_file(filepath);
-        free(filepath);
-
+        char *max_brightness;
         filepath = malloc(PATH_MAX);
         if (filepath == NULL) {
             res.err_msg = "Failed to alloc";
             return res;
         }
-        snprintf(filepath, PATH_MAX, "%s/%s%s", PATH, entry->d_name, MAX);
-        char *brightness = read_file(filepath);
+        snprintf(
+            filepath,
+            PATH_MAX,
+            "%s/%s%s",
+            BACKLIGHT_PATH,
+            entry->d_name,
+            MAX_BRIGHTNESS_PATH
+        );
+        max_brightness = read_file(filepath);
+        free(filepath);
+        // TODO: is free necessary?
 
-        int percent = atoi(brightness) / atoi(max_brightness) * 100;
+        char *current_brightness;
+        filepath = malloc(PATH_MAX);
+        if (filepath == NULL) {
+            res.err_msg = "Failed to alloc";
+            return res;
+        }
+        snprintf(
+            filepath,
+            PATH_MAX,
+            "%s/%s%s",
+            BACKLIGHT_PATH,
+            entry->d_name,
+            CURRENT_BRIGHTNESS_PATH
+        );
+        current_brightness = read_file(filepath);
+
+        int percent;
+        percent = (atoi(current_brightness) * 100) / atoi(max_brightness);
 
         free(filepath);
         free(max_brightness);
-        free(brightness);
+        free(current_brightness);
 
         res.variant = OK;
         res.ok_value = percent;
         return res;
     }
 
-    res.variant = OK;
-    res.ok_value = 0;
+    res.err_msg = "Failed to read backlight directory";
     return res;
 }
 
@@ -147,13 +178,12 @@ static void set_brightness(const unsigned int percent, const char *filepath) {
     write_file(filepath, str);
     free(str);
 }
-
 static ResultVoid set_brightness_all(const unsigned int percent) {
     DIR *dir;
     struct dirent *entry;
     ResultVoid res = {.variant = ERR, .err_msg = NULL, .ok_value = NULL};
 
-    dir = opendir(PATH);
+    dir = opendir(BACKLIGHT_PATH);
     if (dir == NULL) {
         res.err_msg = "Failed to open directory.";
         return res;
@@ -171,7 +201,12 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
         }
 
         snprintf(
-            filepath, PATH_MAX, "%s/%s%s", PATH, entry->d_name, BRIGHTNESS
+            filepath,
+            PATH_MAX,
+            "%s/%s%s",
+            BACKLIGHT_PATH,
+            entry->d_name,
+            CURRENT_BRIGHTNESS_PATH
         );
 
         set_brightness(percent, filepath);

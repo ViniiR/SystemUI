@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: use result types
 // TODO: urgently do this:
 // TODO: gracefully quit the app instead of exit(1)
 [[noreturn]] void safe_fail(const char *message) {
