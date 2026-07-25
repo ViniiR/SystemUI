@@ -118,13 +118,13 @@ static ResultInt get_brightness() {
         }
 
         char *filepath;
-
-        char *max_brightness;
         filepath = malloc(PATH_MAX);
         if (filepath == NULL) {
             res.err_msg = "Failed to alloc";
             return res;
         }
+
+        char *max_brightness;
         snprintf(
             filepath,
             PATH_MAX,
@@ -134,15 +134,8 @@ static ResultInt get_brightness() {
             MAX_BRIGHTNESS_PATH
         );
         max_brightness = read_file(filepath);
-        free(filepath);
-        // TODO: is free necessary?
 
         char *current_brightness;
-        filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            res.err_msg = "Failed to alloc";
-            return res;
-        }
         snprintf(
             filepath,
             PATH_MAX,
