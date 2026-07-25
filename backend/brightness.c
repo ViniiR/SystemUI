@@ -223,5 +223,6 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
     closedir(dir);
 
     res.variant = OK;
+    res.err_msg = "";
     return res;
 }

@@ -38,6 +38,7 @@ ResultString read_file(const char *path) {
     fclose(f);
 
     res.variant = OK;
+    res.err_msg = "";
     res.ok_value = value;
     return res;
 }
@@ -58,6 +59,7 @@ ResultVoid write_file(const char *path, const char *content) {
     fclose(f);
 
     res.variant = OK;
+    res.err_msg = "";
     return res;
 }
 
@@ -102,5 +104,6 @@ ResultVoid exec_command(
     pclose(fp);
 
     res.variant = OK;
+    res.err_msg = "";
     return res;
 }
