@@ -1,10 +1,10 @@
 #pragma once
 
-char *read_file(const char *path);
+#include "types.h"
 
-void write_file(const char *path, const char *content);
+ResultString read_file(const char *path);
 
-[[noreturn]] void safe_fail(const char *message);
+ResultVoid write_file(const char *path, const char *content);
 
-void exec_command(char *output, const unsigned int size, const char *command,
+ResultVoid exec_command(char *output, const unsigned int size, const char *command,
                   const char *modes);

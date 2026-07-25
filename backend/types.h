@@ -23,3 +23,5 @@ typedef enum { OK, ERR } ResultVariant;
 RESULT(void *, Void)
 RESULT(int, Int)
 RESULT(char *, String)
+
+#define RESULT_ERR_MSG_UNKNOWN "Unknown error"

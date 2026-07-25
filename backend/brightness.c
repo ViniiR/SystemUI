@@ -103,7 +103,9 @@ static const char CURRENT_BRIGHTNESS_PATH[] = "/brightness";
 static ResultInt get_brightness() {
     DIR *dir;
     struct dirent *entry;
-    ResultInt res = {.variant = ERR, .err_msg = NULL, .ok_value = 0};
+    ResultInt res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = 0
+    };
 
     dir = opendir(BACKLIGHT_PATH);
     if (dir == NULL) {
@@ -133,7 +135,12 @@ static ResultInt get_brightness() {
             entry->d_name,
             MAX_BRIGHTNESS_PATH
         );
-        max_brightness = read_file(filepath);
+        ResultString file_result = read_file(filepath);
+        if (file_result.variant == ERR) {
+            res.err_msg = file_result.err_msg;
+            return res;
+        }
+        max_brightness = file_result.ok_value;
 
         char *current_brightness;
         snprintf(
@@ -144,7 +151,12 @@ static ResultInt get_brightness() {
             entry->d_name,
             CURRENT_BRIGHTNESS_PATH
         );
-        current_brightness = read_file(filepath);
+        file_result = read_file(filepath);
+        if (file_result.variant == ERR) {
+            res.err_msg = file_result.err_msg;
+            return res;
+        }
+        current_brightness = file_result.ok_value;
 
         int percent;
         percent = (atoi(current_brightness) * 100) / atoi(max_brightness);
@@ -174,7 +186,9 @@ static void set_brightness(const unsigned int percent, const char *filepath) {
 static ResultVoid set_brightness_all(const unsigned int percent) {
     DIR *dir;
     struct dirent *entry;
-    ResultVoid res = {.variant = ERR, .err_msg = NULL, .ok_value = NULL};
+    ResultVoid res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL
+    };
 
     dir = opendir(BACKLIGHT_PATH);
     if (dir == NULL) {
