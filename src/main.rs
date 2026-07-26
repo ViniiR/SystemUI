@@ -34,7 +34,8 @@ fn activate(app: &Application) {
 
     // TODO: improve error handling
     glib::MainContext::default().spawn_local(async move {
-        let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::Session).await else {
+        // NOTE: getting system bus
+        let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::System).await else {
             g_error!(None, "Failed to connect with DBus");
             return;
         };

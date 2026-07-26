@@ -1,6 +1,6 @@
 use gtk::{
     gio::{self, DBusCallFlags, DBusConnection},
-    glib::{self, g_warning, variant::ToVariant},
+    glib::{self, g_warning, variant::ToVariant, VariantTy, VariantType},
     prelude::RangeExt,
     Builder, Label, Scale,
 };
@@ -17,28 +17,63 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
         return Err(HandlerError::ObjectError);
     };
 
+    // IIFE
+    (glib::clone!(
+        #[strong]
+        conn,
+        #[strong]
+        label,
+        #[strong]
+        scale,
+        move || {
+            let res = conn.call_sync(
+                dbus::BUS_NAME,
+                dbus::Controllers::BRIGHTNESS,
+                &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
+                dbus::Methods::GET_BRIGHTNESS,
+                None,
+                Some(VariantTy::TUPLE),
+                DBusCallFlags::NONE,
+                dbus::Timeout::NONE,
+                gio::Cancellable::NONE,
+            );
+
+            if let Err(e) = &res {
+                g_warning!(None, "DBus call error: {e:?}");
+                return;
+            }
+            let Some(p) = res.unwrap().child_value(0).get::<u32>() else {
+                g_warning!(None, "GetBrightness callback returned incorrect value");
+                return;
+            };
+            label.set_text(&p.to_string());
+            scale.set_value(p as f64);
+        }
+    ))();
+
     scale.connect_value_changed(glib::clone!(
         #[strong]
         conn,
         #[strong]
         label,
         move |scale| {
-            let value = scale.value() as i32;
+            let value = scale.value() as u32;
 
+            // TODO: maybe should be inside callback
             label.set_text(&value.to_string());
 
             conn.call(
-                dbus::DAEMON_NAME,
+                dbus::BUS_NAME,
                 dbus::Controllers::BRIGHTNESS,
-                dbus::INTERFACE,
+                &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
                 dbus::Methods::SET_BRIGHTNESS,
-                Some(&value.to_variant()),
+                Some(&(value,).to_variant()),
                 None,
                 DBusCallFlags::NONE,
                 dbus::Timeout::NONE,
                 gio::Cancellable::NONE,
                 |res| {
-                    if let Err(e) = res {
+                    if let Err(e) = &res {
                         g_warning!(None, "DBus call error: {e:?}");
                     }
                 },
