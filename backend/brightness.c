@@ -3,8 +3,7 @@
 #include "types.h"
 #include "util.h"
 #include <dirent.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <systemd/sd-bus.h>
 
@@ -174,14 +173,36 @@ static ResultInt get_brightness() {
     return res;
 }
 
-static void set_brightness(const unsigned int percent, const char *filepath) {
+static ResultVoid set_brightness(
+    const unsigned int percent, const char *filepath, const char *max_filepath
+) {
     static const int MAX_LEN = sizeof(char) * 50;
 
-    char *str = malloc(MAX_LEN);
-    snprintf(str, MAX_LEN, "%i", percent);
+    ResultVoid res = RESULT_VOID_DEFAULT;
 
-    write_file(filepath, str);
+    ResultString result_max = read_file(max_filepath);
+    if (result_max.variant == ERR) {
+        res.err_msg = result_max.err_msg;
+        return res;
+    }
+
+    int calculated_value =
+        ceil((float)percent * atoi(result_max.ok_value) / 100);
+
+    char *str = malloc(MAX_LEN);
+    snprintf(str, MAX_LEN, "%i", calculated_value);
+
+    ResultVoid result = write_file(filepath, str);
+    if (result.variant == ERR) {
+        res.err_msg = result.err_msg;
+        return res;
+    }
+
     free(str);
+
+    res.variant = OK;
+    res.err_msg = "";
+    return res;
 }
 static ResultVoid set_brightness_all(const unsigned int percent) {
     DIR *dir;
@@ -204,7 +225,6 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
             res.err_msg = "Failed to alloc";
             return res;
         }
-
         snprintf(
             filepath,
             PATH_MAX,
@@ -214,7 +234,26 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
             CURRENT_BRIGHTNESS_PATH
         );
 
-        set_brightness(percent, filepath);
+        char *max_filepath = malloc(PATH_MAX);
+        if (max_filepath == NULL) {
+            res.err_msg = "Failed to alloc";
+            return res;
+        }
+        snprintf(
+            max_filepath,
+            PATH_MAX,
+            "%s/%s%s",
+            BACKLIGHT_PATH,
+            entry->d_name,
+            MAX_BRIGHTNESS_PATH
+        );
+
+        ResultVoid result = set_brightness(percent, filepath, max_filepath);
+        if (result.variant == ERR) {
+            res.err_msg = result.err_msg;
+            return res;
+        }
+
         free(filepath);
     }
 
