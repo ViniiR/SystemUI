@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum HandlerError {
     DBusError,
-    ObjectError,
+    ObjectError(&'static str),
 }
 
 // TODO: idk, but make it prettier, on the users side

@@ -1,6 +1,6 @@
 use gtk::{
-    gio::{self, DBusCallFlags, DBusConnection},
-    glib::{self, g_warning, variant::ToVariant, VariantTy, VariantType},
+    gio::{DBusCallFlags, DBusConnection},
+    glib::{self, g_warning, object::ObjectExt, variant::ToVariant, VariantTy},
     prelude::RangeExt,
     Builder, Label, Scale,
 };
@@ -8,15 +8,46 @@ use gtk::{
 use crate::types::dbus;
 use crate::types::HandlerError;
 
-// TODO: type define errors
 pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError> {
-    let Some(scale) = builder.object::<Scale>("brightness-scale") else {
-        return Err(HandlerError::ObjectError);
-    };
-    let Some(label) = builder.object::<Label>("brightness-scale-label") else {
-        return Err(HandlerError::ObjectError);
-    };
+    let scale = builder
+        .object::<Scale>("brightness-scale")
+        .ok_or(HandlerError::ObjectError("brightness-scale"))?;
+    let label = builder
+        .object::<Label>("brightness-label")
+        .ok_or(HandlerError::ObjectError("brightness-label"))?;
 
+    let signal = scale.connect_value_changed(glib::clone!(
+        #[weak]
+        label,
+        #[strong]
+        conn,
+        move |scale| {
+            let value = scale.value() as u32;
+
+            label.set_text(&format!("{}", value));
+
+            let res = conn.call_future(
+                dbus::BUS_NAME,
+                dbus::Controllers::BRIGHTNESS,
+                &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
+                dbus::Methods::SET_BRIGHTNESS,
+                Some(&(value,).to_variant()),
+                None,
+                DBusCallFlags::NONE,
+                dbus::Timeout::NONE,
+            );
+
+            glib::MainContext::default().spawn_local(async move {
+                let res = res.await;
+
+                if let Err(e) = &res {
+                    g_warning!(None, "DBus call error: {e:?}");
+                }
+            });
+        }
+    ));
+
+    // Get brightness on startup
     let res = conn.call_future(
         dbus::BUS_NAME,
         dbus::Controllers::BRIGHTNESS,
@@ -28,9 +59,9 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
         dbus::Timeout::NONE,
     );
     glib::MainContext::default().spawn_local(glib::clone!(
-        #[strong]
+        #[weak]
         label,
-        #[strong]
+        #[weak]
         scale,
         async move {
             let res = res.await;
@@ -43,38 +74,12 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
                 g_warning!(None, "GetBrightness callback returned incorrect value");
                 return;
             };
-            label.set_text(&p.to_string());
+
+            label.set_text(&format!("{}", p));
+
+            scale.block_signal(&signal);
             scale.set_value(p as f64);
-        }
-    ));
-
-    scale.connect_value_changed(glib::clone!(
-        #[strong]
-        conn,
-        #[strong]
-        label,
-        move |scale| {
-            let value = scale.value() as u32;
-
-            // TODO: maybe should be inside callback
-            label.set_text(&value.to_string());
-
-            conn.call(
-                dbus::BUS_NAME,
-                dbus::Controllers::BRIGHTNESS,
-                &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
-                dbus::Methods::SET_BRIGHTNESS,
-                Some(&(value,).to_variant()),
-                None,
-                DBusCallFlags::NONE,
-                dbus::Timeout::NONE,
-                gio::Cancellable::NONE,
-                |res| {
-                    if let Err(e) = &res {
-                        g_warning!(None, "DBus call error: {e:?}");
-                    }
-                },
-            );
+            scale.unblock_signal(&signal);
         }
     ));
 
