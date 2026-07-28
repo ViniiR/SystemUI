@@ -3,12 +3,12 @@
 <busconfig>
     <!-- Owner -->
     <policy user="root">
-        <allow own="com.vinii.VGSController" />
-        <allow send_destination="com.vinii.VGSController" />
-        <allow receive_sender="com.vinii.VGSController" />
+        <allow own="com.vinii.vgsc" />
+        <allow send_destination="com.vinii.vgsc" />
+        <allow receive_sender="com.vinii.vgsc" />
     </policy>
     <!-- User -->
     <policy context="default">
-        <allow send_destination="com.vinii.VGSController" />
+        <allow send_destination="com.vinii.vgsc" />
     </policy>
 </busconfig>

@@ -5,10 +5,10 @@ use gtk::{
     Builder, Label, Scale,
 };
 
-use crate::types::dbus;
 use crate::types::HandlerError;
+use crate::types::{dbus, Program};
 
-pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError> {
+pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError<'_>> {
     let scale = builder
         .object::<Scale>("brightness-scale")
         .ok_or(HandlerError::ObjectError("Failed to get brightness-scale"))?;
@@ -30,7 +30,7 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
             label.set_text(&format!("{}", value));
 
             let res = conn.call_future(
-                dbus::BUS_NAME,
+                Some(Program::BACKEND_NAME),
                 dbus::Controllers::BRIGHTNESS,
                 &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
                 dbus::Methods::SET_BRIGHTNESS,
@@ -52,7 +52,7 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
 
     // Get brightness on startup
     let res = conn.call_future(
-        dbus::BUS_NAME,
+        Some(Program::BACKEND_NAME),
         dbus::Controllers::BRIGHTNESS,
         &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
         dbus::Methods::GET_BRIGHTNESS,

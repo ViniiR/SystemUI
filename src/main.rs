@@ -3,18 +3,10 @@ use gtk::glib::g_critical;
 use gtk::{gio, glib, Application, ApplicationWindow};
 use gtk::{prelude::*, CssProvider};
 
+use crate::types::Program;
+
 mod brightness;
 mod types;
-
-// TODO: standardize this name and actually pick something good
-// VGSController is bad!!
-// Frontend: com vinii vgs
-// Backend: com vinii vgsc
-struct Program;
-impl Program {
-    pub const PATH: &'static str = "/com/vinii/vgs";
-    pub const NAME: &'static str = "com.vinii.vgs";
-}
 
 fn main() -> glib::ExitCode {
     let app = Application::builder().application_id(Program::NAME).build();

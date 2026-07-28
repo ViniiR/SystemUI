@@ -4,7 +4,7 @@
 #include <systemd/sd-bus.h>
 #include <stdbool.h>
 
-const char DBUS_SERVICE_NAME[] = "com.vinii.VGSController";
+const char DBUS_SERVICE_NAME[] = "com.vinii.vgsc";
 sd_bus *p_dbus = NULL;
 
 static int fail_with_message(const char message[], sd_bus *p, const int code);

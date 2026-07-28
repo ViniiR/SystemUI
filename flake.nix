@@ -7,8 +7,8 @@
         system = "x86_64-linux";
         pkgs = import nixpkgs {inherit system;};
         lib = pkgs.lib;
-        daemon_name = "com.vinii.VGSController";
-        binary_name = "vgscontroller";
+        interface_name = "com.vinii.vgsc";
+        binary_name = "vgscd";
     in {
         packages.${system}.default = pkgs.stdenv.mkDerivation rec {
             pname = binary_name;
@@ -41,9 +41,9 @@
             postInstall = ''
                 # Launch D-Bus service
                 mkdir -p $out/share/dbus-1/system-services
-                cat <<END > $out/share/dbus-1/system-services/${daemon_name}.service
+                cat <<END > $out/share/dbus-1/system-services/${interface_name}.service
                 [D-BUS Service]
-                Name=${daemon_name}
+                Name=${interface_name}
                 Exec=$out/bin/${pname}
                 User=root
                 SystemdService=${pname}.service
@@ -51,7 +51,7 @@
                 
                 # D-Bus config file
                 mkdir -p $out/share/dbus-1/system.d
-                cp ${./dbus.conf.xml} $out/share/dbus-1/system.d/${daemon_name}.conf
+                cp ${./dbus.conf.xml} $out/share/dbus-1/system.d/${interface_name}.conf
             '';
         };
         nixosModules.default = {...}: let
@@ -61,13 +61,13 @@
             # environment.systemPackages = [package];
 
             systemd.services.${binary_name} = {
-                description = "VGSController Daemon";
+                description = "Vinii's Graphical System Controller Daemon";
                 wantedBy = ["multi-user.target"];
                 after = ["dbus.service"];
                 wants = ["dbus.service"];
                 serviceConfig = {
                     Type = "dbus";
-                    BusName = daemon_name;
+                    BusName = interface_name;
                     ExecStart = "${package}/bin/${binary_name}";
                     Restart = "always";
                 };

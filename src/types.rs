@@ -1,25 +1,32 @@
 #[derive(Debug, Clone)]
-pub enum HandlerError {
+pub enum HandlerError<'a> {
     DBusError,
     #[allow(dead_code)]
-    ObjectError(&'static str),
+    ObjectError(&'a str),
+}
+
+pub struct Program;
+impl Program {
+    // Vinii's Graphical System Controller (Daemon)
+    pub const PATH: &str = "/com/vinii/vgsc";
+    pub const NAME: &str = "com.vinii.vgsc";
+
+    pub const BACKEND_PATH: &str = "/com/vinii/vgsc";
+    pub const BACKEND_NAME: &str = "com.vinii.vgsc";
 }
 
 // TODO: idk, but make it prettier, on dev side
 pub mod dbus {
-    pub const BUS_NAME: Option<&str> = Some("com.vinii.VGSController");
-
     pub struct Controllers;
     impl Controllers {
-        pub const BRIGHTNESS: &str = "/com/vinii/VGSController/Brightness";
-        pub const AUDIO: &str = "/com/vinii/VGSController/Audio";
-        pub const BATTERY: &str = "/com/vinii/VGSController/Battery";
-        pub const POWER: &str = "/com/vinii/VGSController/Power";
+        pub const BRIGHTNESS: &str = "/com/vinii/vgsc/Brightness";
+        pub const AUDIO: &str = "/com/vinii/vgsc/Audio";
+        pub const BATTERY: &str = "/com/vinii/vgsc/Battery";
+        pub const POWER: &str = "/com/vinii/vgsc/Power";
 
         pub fn to_interface(interface: &str) -> String {
             interface
                 .chars()
-                .into_iter()
                 .skip(1)
                 .collect::<String>()
                 .replace('/', ".")
