@@ -11,10 +11,13 @@ use crate::types::HandlerError;
 pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError> {
     let scale = builder
         .object::<Scale>("brightness-scale")
-        .ok_or(HandlerError::ObjectError("brightness-scale"))?;
-    let label = builder
-        .object::<Label>("brightness-label")
-        .ok_or(HandlerError::ObjectError("brightness-label"))?;
+        .ok_or(HandlerError::ObjectError("Failed to get brightness-scale"))?;
+    let label =
+        builder
+            .object::<Label>("brightness-scale-label")
+            .ok_or(HandlerError::ObjectError(
+                "Failed to get brightness-scale-label",
+            ))?;
 
     let signal = scale.connect_value_changed(glib::clone!(
         #[weak]
