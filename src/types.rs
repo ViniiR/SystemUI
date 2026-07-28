@@ -1,10 +1,11 @@
 #[derive(Debug, Clone)]
 pub enum HandlerError {
     DBusError,
+    #[allow(dead_code)]
     ObjectError(&'static str),
 }
 
-// TODO: idk, but make it prettier, on the users side
+// TODO: idk, but make it prettier, on dev side
 pub mod dbus {
     pub const BUS_NAME: Option<&str> = Some("com.vinii.VGSController");
 

@@ -1,21 +1,35 @@
-use gtk::{gdk::Display, glib::g_error};
+use gtk::gdk::Display;
+use gtk::glib::g_critical;
 use gtk::{gio, glib, Application, ApplicationWindow};
 use gtk::{prelude::*, CssProvider};
 
 mod brightness;
 mod types;
 
-pub const PROGRAM_NAME: &str = "com.vinii.vgs";
+// TODO: standardize this name and actually pick something good
+// VGSController is bad!!
+// Frontend: com vinii vgs
+// Backend: com vinii vgsc
+struct Program;
+impl Program {
+    pub const PATH: &'static str = "/com/vinii/vgs";
+    pub const NAME: &'static str = "com.vinii.vgs";
+}
 
 fn main() -> glib::ExitCode {
-    let app = Application::builder().application_id(PROGRAM_NAME).build();
+    let app = Application::builder().application_id(Program::NAME).build();
 
     app.connect_startup(|_| {
         let provider = CssProvider::new();
         provider.load_from_path("src/ui/style.css");
 
+        let Some(display) = Display::default() else {
+            g_critical!(None, "Failed to get default display");
+            return;
+        };
+
         gtk::style_context_add_provider_for_display(
-            &Display::default().expect("Failed to connect to default display"),
+            &display,
             &provider,
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
@@ -28,20 +42,19 @@ fn main() -> glib::ExitCode {
 fn activate(app: &Application) {
     let builder = gtk::Builder::from_file("src/ui/builder.ui");
     let Some(window) = builder.object::<ApplicationWindow>("main-window") else {
-        g_error!(None, "Failed to get builder main-window");
+        g_critical!(None, "Failed to get builder main-window");
         return;
     };
 
-    // TODO: improve error handling
     glib::MainContext::default().spawn_local(async move {
         // NOTE: getting system bus
         let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::System).await else {
-            g_error!(None, "Failed to connect with DBus");
+            g_critical!(None, "Failed to connect with DBus");
             return;
         };
 
         if let Err(e) = brightness::handle_brightness(&builder, dbus_connection.clone()) {
-            g_error!(None, "Brightness error: {e:?}");
+            g_critical!(None, "Brightness error: {e:?}");
             return;
         };
     });
