@@ -37,6 +37,9 @@ pub mod dbus {
     impl Methods {
         pub const SET_BRIGHTNESS: &str = "SetBrightness";
         pub const GET_BRIGHTNESS: &str = "GetBrightness";
+        pub const SHUTDOWN: &str = "Shutdown";
+        pub const REBOOT: &str = "Reboot";
+        pub const LOGOUT: &str = "Logout";
     }
 
     pub struct Timeout;

@@ -6,6 +6,7 @@ use gtk::{prelude::*, CssProvider};
 use crate::types::Program;
 
 mod brightness;
+mod power;
 mod types;
 
 fn main() -> glib::ExitCode {
@@ -47,6 +48,11 @@ fn activate(app: &Application) {
 
         if let Err(e) = brightness::handle_brightness(&builder, dbus_connection.clone()) {
             g_critical!(None, "Brightness error: {e:?}");
+            return;
+        };
+
+        if let Err(e) = power::handle_power(&builder, dbus_connection.clone()) {
+            g_critical!(None, "Power error: {e:?}");
             return;
         };
     });
