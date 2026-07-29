@@ -40,7 +40,7 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
                 dbus::Timeout::NONE,
             );
 
-            glib::MainContext::default().spawn_local(async move {
+            glib::spawn_future_local(async move {
                 let res = res.await;
 
                 if let Err(e) = &res {
@@ -61,7 +61,7 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
         DBusCallFlags::NONE,
         dbus::Timeout::NONE,
     );
-    glib::MainContext::default().spawn_local(glib::clone!(
+    glib::spawn_future_local(glib::clone!(
         #[weak]
         label,
         #[weak]
