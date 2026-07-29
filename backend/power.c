@@ -1,0 +1,88 @@
+#include "power.h"
+#include "types.h"
+#include "util.h"
+#include <systemd/sd-bus.h>
+
+const char POWER_PATH[] = "/com/vinii/vgsc/Power";
+const char POWER_INTERFACE[] = "com.vinii.vgsc.Power";
+
+const sd_bus_vtable POWER_VTABLE[] = {
+    SD_BUS_VTABLE_START(0),
+    SD_BUS_METHOD_WITH_NAMES(
+        "Shutdown",
+        "",
+        SD_BUS_PARAM(),
+        "",
+        SD_BUS_PARAM(),
+        shutdown_handler,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
+    SD_BUS_METHOD_WITH_NAMES(
+        "Reboot",
+        "",
+        SD_BUS_PARAM(),
+        "",
+        SD_BUS_PARAM(),
+        reboot_handler,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
+    SD_BUS_METHOD_WITH_NAMES(
+        "Logout",
+        "",
+        SD_BUS_PARAM(),
+        "",
+        SD_BUS_PARAM(),
+        logout_handler,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
+    SD_BUS_VTABLE_END
+};
+
+//
+//
+
+int reboot_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    ResultVoid result = exec_command(NULL, 0, "systemctl reboot", "r");
+    if (result.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to reboot, Error: %s",
+            result.err_msg
+        );
+    }
+
+    return sd_bus_reply_method_return(p_msg, NULL);
+}
+int shutdown_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    ResultVoid result = exec_command(NULL, 0, "systemctl shutdown", "r");
+    if (result.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to shutdown, Error: %s",
+            result.err_msg
+        );
+    }
+
+    return sd_bus_reply_method_return(p_msg, NULL);
+}
+int logout_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    ResultVoid result = exec_command(NULL, 0, "loginctl terminate-session self", "r");
+    if (result.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to terminate session, Error: %s",
+            result.err_msg
+        );
+    }
+
+    return sd_bus_reply_method_return(p_msg, NULL);
+}
