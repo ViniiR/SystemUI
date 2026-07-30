@@ -134,12 +134,13 @@ static ResultInt get_brightness() {
             entry->d_name,
             MAX_BRIGHTNESS_PATH
         );
-        ResultString file_result = read_file(filepath);
+        ResultHeapString file_result = read_file(filepath);
         if (file_result.variant == ERR) {
             res.err_msg = file_result.err_msg;
             return res;
         }
         max_brightness = file_result.ok_value;
+        free(file_result.ok_value); // ResultHeapString
 
         char *current_brightness;
         snprintf(
@@ -160,6 +161,7 @@ static ResultInt get_brightness() {
         int percent;
         percent = (atoi(current_brightness) * 100) / atoi(max_brightness);
 
+        free(file_result.ok_value);
         free(filepath);
         free(max_brightness);
         free(current_brightness);
@@ -180,7 +182,7 @@ static ResultVoid set_brightness(
 
     ResultVoid res = RESULT_VOID_DEFAULT;
 
-    ResultString result_max = read_file(max_filepath);
+    ResultHeapString result_max = read_file(max_filepath);
     if (result_max.variant == ERR) {
         res.err_msg = result_max.err_msg;
         return res;
@@ -198,6 +200,7 @@ static ResultVoid set_brightness(
         return res;
     }
 
+    free(result_max.ok_value);
     free(str);
 
     res.variant = OK;

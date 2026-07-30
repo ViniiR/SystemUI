@@ -35,6 +35,7 @@ int get_battery_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
     // TODO:
+    return 0;
 }
 
 //
@@ -112,14 +113,14 @@ static ResultInt get_battery_percentage() {
         energy_now
     );
 
-    ResultString result_full = read_file(full_capacity);
+    ResultHeapString result_full = read_file(full_capacity);
     if (result_full.variant == ERR) {
         res.err_msg = result_full.err_msg;
         return res;
     }
     int full_number = atoi(result_full.ok_value);
 
-    ResultString result_now = read_file(now_capacity);
+    ResultHeapString result_now = read_file(now_capacity);
     if (result_now.variant == ERR) {
         res.err_msg = result_now.err_msg;
         return res;
@@ -129,6 +130,8 @@ static ResultInt get_battery_percentage() {
     int value = (int)round(((double)now_number / (double)full_number) * 100.0);
 
     free(result_directory.ok_value);
+    free(result_full.ok_value);
+    free(result_now.ok_value);
 
     res.variant = OK;
     res.ok_value = value;
@@ -151,7 +154,7 @@ static ResultInt get_charging_status() {
     char filepath[4096 + sizeof(status)];
     snprintf(filepath, sizeof(filepath), "%s%s", result_dir.ok_value, status);
 
-    ResultString result = read_file(filepath);
+    ResultHeapString result = read_file(filepath);
     if (result.variant == ERR) {
         res.err_msg = result.err_msg;
         return res;
@@ -165,6 +168,7 @@ static ResultInt get_charging_status() {
     }
 
     free(result_dir.ok_value);
+    free(result.ok_value);
 
     res.variant = OK;
     res.ok_value = status;

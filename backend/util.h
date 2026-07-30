@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-ResultString read_file(const char *path);
+ResultHeapString read_file(const char *path);
 
 ResultVoid write_file(const char *path, const char *content);
 
