@@ -255,6 +255,7 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
         }
 
         free(filepath);
+        free(max_filepath);
     }
 
     closedir(dir);
