@@ -40,6 +40,7 @@ pub mod dbus {
         pub const SHUTDOWN: &str = "Shutdown";
         pub const REBOOT: &str = "Reboot";
         pub const LOGOUT: &str = "Logout";
+        pub const GET_BATTERY: &str = "GetBattery";
     }
 
     pub struct Timeout;

@@ -4,6 +4,7 @@
 #include "types.h"
 #include "util.h"
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <systemd/sd-bus.h>
 
@@ -16,9 +17,9 @@ const sd_bus_vtable BATTERY_VTABLE[] = {
     SD_BUS_METHOD_WITH_NAMES(
         "GetBattery",
         "",
-        SD_BUS_PARAM(),
-        "(su)",
-        SD_BUS_PARAM(battery),
+        "",
+        "su",
+        SD_BUS_PARAM(icon) SD_BUS_PARAM(percentage),
         get_battery_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
@@ -28,14 +29,36 @@ const sd_bus_vtable BATTERY_VTABLE[] = {
 //
 
 static ResultHeapString get_battery_icon();
+static ResultInt get_battery_percentage();
 
 //
 
 int get_battery_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    // TODO:
-    return 0;
+    ResultHeapString result_icon = get_battery_icon();
+    if (result_icon.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_INVALID_ARGS,
+            "Failed to get battery, Error %s",
+            result_icon.err_msg
+        );
+    }
+    ResultInt result_percent = get_battery_percentage();
+    if (result_icon.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_INVALID_ARGS,
+            "Failed to get battery, Error %s",
+            result_percent.err_msg
+        );
+    }
+
+    int return_value= sd_bus_reply_method_return(p_msg, "su", result_icon.ok_value, result_percent.ok_value);
+
+    free(result_icon.ok_value);
+    return return_value;
 }
 
 //

@@ -45,12 +45,12 @@
                     <property name="valign">center</property>
 
                     <child>
-                    <object class="GtkLabel">
+                    <object class="GtkLabel" id="battery-button-box-label">
                         <property name="label">0%</property>
                     </object>
                     </child>
                     <child>
-                    <object class="GtkImage">
+                    <object class="GtkImage" id="battery-button-box-image">
                         <property name="icon-name">battery-level-0</property>
                     </object>
                     </child>

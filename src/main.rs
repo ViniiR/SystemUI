@@ -5,6 +5,7 @@ use gtk::{prelude::*, CssProvider};
 
 use crate::types::Program;
 
+mod battery;
 mod brightness;
 mod power;
 mod types;
@@ -39,6 +40,7 @@ fn activate(app: &Application) {
         return;
     };
 
+    // TODO: spawn future local?
     glib::MainContext::default().spawn_local(async move {
         // NOTE: getting system bus
         let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::System).await else {
@@ -53,6 +55,11 @@ fn activate(app: &Application) {
 
         if let Err(e) = power::handle_power(&builder, dbus_connection.clone()) {
             g_critical!(None, "Power error: {e:?}");
+            return;
+        };
+
+        if let Err(e) = battery::handle_battery(&builder, dbus_connection.clone()) {
+            g_critical!(None, "Battery error: {e:?}");
             return;
         };
     });

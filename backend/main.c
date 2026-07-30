@@ -1,3 +1,4 @@
+#include "battery.h"
 #include "brightness.h"
 #include "power.h"
 #include <stdio.h>
@@ -43,6 +44,19 @@ int main(int argc, char **argv) {
     if (err < 0)
         return fail_with_message("Failed to add object vtable", p_dbus, err);
     printf("Added '%s' object vtable\n", POWER_PATH);
+
+    // Battery controller
+    err = sd_bus_add_object_vtable(
+        p_dbus,
+        NULL,
+        BATTERY_PATH,
+        BATTERY_INTERFACE,
+        BATTERY_VTABLE,
+        NULL
+    );
+    if (err < 0)
+        return fail_with_message("Failed to add object vtable", p_dbus, err);
+    printf("Added '%s' object vtable\n", BATTERY_PATH);
 
     err = sd_bus_request_name(p_dbus, DBUS_SERVICE_NAME, 0);
     if (err < 0)
