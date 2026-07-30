@@ -51,23 +51,24 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
     ));
 
     // Get brightness on startup
-    let res = conn.call_future(
-        Some(Program::BACKEND_NAME),
-        dbus::Controllers::BRIGHTNESS,
-        &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
-        dbus::Methods::GET_BRIGHTNESS,
-        None,
-        Some(VariantTy::TUPLE),
-        DBusCallFlags::NONE,
-        dbus::Timeout::NONE,
-    );
     glib::spawn_future_local(glib::clone!(
         #[weak]
         label,
         #[weak]
         scale,
         async move {
-            let res = res.await;
+            let res = conn
+                .call_future(
+                    Some(Program::BACKEND_NAME),
+                    dbus::Controllers::BRIGHTNESS,
+                    &dbus::Controllers::to_interface(dbus::Controllers::BRIGHTNESS),
+                    dbus::Methods::GET_BRIGHTNESS,
+                    None,
+                    Some(VariantTy::TUPLE),
+                    DBusCallFlags::NONE,
+                    dbus::Timeout::NONE,
+                )
+                .await;
 
             if let Err(e) = &res {
                 g_warning!(None, "DBus call error: {e:?}");
