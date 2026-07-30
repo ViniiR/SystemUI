@@ -36,6 +36,7 @@ static ResultInt get_battery_percentage();
 int get_battery_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
+    // TODO: silently failing
     ResultHeapString result_icon = get_battery_icon();
     if (result_icon.variant == ERR) {
         return sd_bus_error_setf(
@@ -46,7 +47,7 @@ int get_battery_handler(
         );
     }
     ResultInt result_percent = get_battery_percentage();
-    if (result_icon.variant == ERR) {
+    if (result_percent.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
             SD_BUS_ERROR_INVALID_ARGS,
@@ -55,7 +56,9 @@ int get_battery_handler(
         );
     }
 
-    int return_value= sd_bus_reply_method_return(p_msg, "su", result_icon.ok_value, result_percent.ok_value);
+    int return_value = sd_bus_reply_method_return(
+        p_msg, "su", result_icon.ok_value, result_percent.ok_value
+    );
 
     free(result_icon.ok_value);
     return return_value;
@@ -198,25 +201,35 @@ static ResultInt get_charging_status() {
     return res;
 }
 
-static ResultHeapString get_battery_icon() {
+static int format_percentage(const int percentage) {
+    int battery_level_formatted = 0;
+
+    if (percentage <= 0) {
+        battery_level_formatted = 0;
+    } else if (percentage <= 9) {
+        battery_level_formatted = percentage;
+    } else if (percentage >= 100) {
+        battery_level_formatted = 100;
+    } else {
+        char first[1 + 1];
+        snprintf(first, sizeof(first), "%1.0f", (float)percentage);
+        battery_level_formatted = atoi(first) * 10;
+    }
+
+    return battery_level_formatted;
+}
+
+static ResultHeapString allocate_suffix(const ChargingStatus status) {
+    static const char plugged[] = "-plugged-in";
+    static const char charging[] = "-charging";
+
     ResultHeapString res = {
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
     };
 
-    static const char plugged[] = "-plugged-in";
-    static const char charging[] = "-charging";
-    static const char battery_prefix[] = "battery-level-";
-
     int alloc_size = 1;
     char *suffix;
-
-    ResultInt charging_status_result = get_charging_status();
-    if (charging_status_result.variant == ERR) {
-        res.err_msg = charging_status_result.err_msg;
-        return res;
-    }
-
-    switch ((ChargingStatus)charging_status_result.ok_value) {
+    switch (status) {
     case CHARGING:
         alloc_size += sizeof(charging);
         suffix = malloc(alloc_size);
@@ -228,12 +241,41 @@ static ResultHeapString get_battery_icon() {
         snprintf(suffix, alloc_size, "%s", plugged);
         break;
     case DISCHARGING:
-        alloc_size += sizeof(char) * 2;
+        alloc_size += 1;
         suffix = malloc(alloc_size);
+        snprintf(suffix, alloc_size, "");
         break;
     }
 
-    int battery_level_formatted = 0;
+    if (suffix == NULL) {
+        res.err_msg = "Failed to alloc";
+        return res;
+    }
+
+    res.variant = OK;
+    res.ok_value = suffix;
+    return res;
+}
+
+static ResultHeapString get_battery_icon() {
+    static const char battery_prefix[] = "battery-level-";
+
+    ResultHeapString res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
+    };
+
+    ResultInt charging_status_result = get_charging_status();
+    if (charging_status_result.variant == ERR) {
+        res.err_msg = charging_status_result.err_msg;
+        return res;
+    }
+
+    ResultHeapString result_suffix =
+        allocate_suffix((ChargingStatus)charging_status_result.ok_value);
+    if (result_suffix.variant == ERR) {
+        res.err_msg = result_suffix.err_msg;
+        return res;
+    }
 
     ResultInt result_percentage = get_battery_percentage();
     if (result_percentage.variant == ERR) {
@@ -241,21 +283,9 @@ static ResultHeapString get_battery_icon() {
         return res;
     }
 
-    if (result_percentage.ok_value <= 0) {
-        battery_level_formatted = 0;
-    } else if (result_percentage.ok_value <= 9) {
-        battery_level_formatted = result_percentage.ok_value;
-    } else if (result_percentage.ok_value >= 100) {
-        battery_level_formatted = 100;
-    } else {
-        char first[1 + 1];
-        snprintf(
-            first, sizeof(first), "%1.0f", (float)result_percentage.ok_value
-        );
-        battery_level_formatted = atoi(first) * 10;
-    }
+    int battery_level_formatted = format_percentage(result_percentage.ok_value);
 
-    char suffix_len = strlen(suffix);
+    char suffix_len = strlen(result_suffix.ok_value);
 
     int inner_len =
         (sizeof(battery_prefix) + sizeof(battery_level_formatted) +
@@ -268,9 +298,10 @@ static ResultHeapString get_battery_icon() {
         "%s%i%s",
         battery_prefix,
         battery_level_formatted,
-        suffix
+        result_suffix.ok_value
     );
-    free(suffix);
+
+    free(result_suffix.ok_value);
 
     res.variant = OK;
     res.ok_value = buf;
