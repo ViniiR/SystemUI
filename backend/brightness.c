@@ -161,10 +161,8 @@ static ResultInt get_brightness() {
         int percent;
         percent = (atoi(current_brightness) * 100) / atoi(max_brightness);
 
-        free(file_result.ok_value);
         free(filepath);
-        free(max_brightness);
-        free(current_brightness);
+        free(file_result.ok_value); // do not free current_brightness, double free
 
         res.variant = OK;
         res.ok_value = percent;
