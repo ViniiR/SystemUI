@@ -4,6 +4,7 @@
 #include <string.h>
 #include <threads.h>
 
+// TODO: use HeapString on all malloc calls, memory leak in this function
 ResultString read_file(const char *path) {
     FILE *f = fopen(path, "r");
     ResultString res = {
