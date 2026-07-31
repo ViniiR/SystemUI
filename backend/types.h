@@ -34,3 +34,5 @@ RESULT(char *, HeapString)
 
 #define RESULT_VOID_DEFAULT                                                    \
     {.variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL};
+
+#define STRING_KB 4096

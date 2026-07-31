@@ -1,6 +1,6 @@
 #include "battery.h"
 #include "dirent.h"
-#include "systemd/sd-bus-vtable.h"
+#include "string.h"
 #include "types.h"
 #include "util.h"
 #include <math.h>
@@ -96,8 +96,12 @@ static ResultHeapString get_battery_directory() {
         snprintf(start, sizeof(start), "%.3s", entry->d_name);
 
         if (strcmp(start, "BAT") == 0) {
-            char *buf = malloc(4096);
-            snprintf(buf, 4096, "%s/%s", power_supply, entry->d_name);
+            char *buf;
+            int size = asprintf(&buf, "%s/%s", power_supply, entry->d_name);
+            if (size == -1) {
+                res.err_msg = "Failed to alloc";
+                return res;
+            }
 
             res.variant = OK;
             res.ok_value = buf;
@@ -176,8 +180,8 @@ static ResultInt get_charging_status() {
         return res;
     }
 
-    char filepath[4096 + sizeof(status)];
-    snprintf(filepath, sizeof(filepath), "%s%s", result_dir.ok_value, status);
+    char filepath[STRING_KB];
+    snprintf(filepath, STRING_KB, "%s%s", result_dir.ok_value, status);
 
     ResultHeapString result = read_file(filepath);
     if (result.variant == ERR) {
@@ -226,23 +230,16 @@ static ResultHeapString allocate_suffix(const ChargingStatus status) {
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
     };
 
-    int alloc_size = 1;
     char *suffix;
     switch (status) {
     case CHARGING:
-        alloc_size += sizeof(charging);
-        suffix = malloc(alloc_size);
-        snprintf(suffix, alloc_size, "%s", charging);
+        suffix = strdup(charging);
         break;
     case PLUGGED_IN:
-        alloc_size += sizeof(plugged);
-        suffix = malloc(alloc_size);
-        snprintf(suffix, alloc_size, "%s", plugged);
+        suffix = strdup(plugged);
         break;
     case DISCHARGING:
-        alloc_size += 1;
-        suffix = malloc(alloc_size);
-        snprintf(suffix, alloc_size, "");
+        suffix = strdup("");
         break;
     }
 
@@ -284,21 +281,18 @@ static ResultHeapString get_battery_icon() {
 
     int battery_level_formatted = format_percentage(result_percentage.ok_value);
 
-    char suffix_len = strlen(result_suffix.ok_value);
-
-    int inner_len =
-        (sizeof(battery_prefix) + sizeof(battery_level_formatted) +
-         sizeof(char) * suffix_len);
-
-    char *buf = malloc(4096);
-    snprintf(
-        buf,
-        sizeof(buf) > inner_len ? sizeof(buf) : inner_len,
+    char *buf;
+    int size = asprintf(
+        &buf,
         "%s%i%s",
         battery_prefix,
         battery_level_formatted,
         result_suffix.ok_value
     );
+    if (size == -1) {
+        res.err_msg = "Failed to alloc";
+        return res;
+    }
 
     free(result_suffix.ok_value);
 
