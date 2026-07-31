@@ -99,6 +99,36 @@ static const char BACKLIGHT_PATH[] = "/sys/class/backlight";
 static const char MAX_BRIGHTNESS_PATH[] = "/max_brightness";
 static const char CURRENT_BRIGHTNESS_PATH[] = "/brightness";
 
+static ResultHeapString read_brightness_from(
+    const char *dir_name, const char *file_name
+) {
+    ResultHeapString res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
+    };
+
+    char *filepath;
+    int size =
+        asprintf(&filepath, "%s/%s%s", BACKLIGHT_PATH, dir_name, file_name);
+    if (size == -1) {
+        res.err_msg = "Failed to alloc";
+        return res;
+    }
+
+    ResultHeapString file_result = read_file(filepath);
+    if (file_result.variant == ERR) {
+        free(filepath);
+        res.err_msg = file_result.err_msg;
+        return res;
+    }
+    free(filepath);
+
+    char *value = file_result.ok_value;
+
+    res.variant = OK;
+    res.ok_value = value;
+    return res;
+}
+
 static ResultInt get_brightness() {
     DIR *dir;
     struct dirent *entry;
@@ -118,51 +148,24 @@ static ResultInt get_brightness() {
             continue;
         }
 
-        char *filepath;
-        filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            res.err_msg = "Failed to alloc";
+        ResultHeapString result_max_brightness =
+            read_brightness_from(entry->d_name, MAX_BRIGHTNESS_PATH);
+        if (result_max_brightness.variant == ERR) {
+            res.err_msg = result_max_brightness.err_msg;
+            return res;
+        }
+        ResultHeapString result_current_brightness =
+            read_brightness_from(entry->d_name, CURRENT_BRIGHTNESS_PATH);
+        if (result_current_brightness.variant == ERR) {
+            res.err_msg = result_current_brightness.err_msg;
             return res;
         }
 
-        char *max_brightness;
-        snprintf(
-            filepath,
-            PATH_MAX,
-            "%s/%s%s",
-            BACKLIGHT_PATH,
-            entry->d_name,
-            MAX_BRIGHTNESS_PATH
-        );
-        ResultHeapString file_result = read_file(filepath);
-        if (file_result.variant == ERR) {
-            res.err_msg = file_result.err_msg;
-            return res;
-        }
-        max_brightness = file_result.ok_value;
-        free(file_result.ok_value); // ResultHeapString
+        int percent = (atoi(result_current_brightness.ok_value) * 100) /
+                      atoi(result_max_brightness.ok_value);
 
-        char *current_brightness;
-        snprintf(
-            filepath,
-            PATH_MAX,
-            "%s/%s%s",
-            BACKLIGHT_PATH,
-            entry->d_name,
-            CURRENT_BRIGHTNESS_PATH
-        );
-        file_result = read_file(filepath);
-        if (file_result.variant == ERR) {
-            res.err_msg = file_result.err_msg;
-            return res;
-        }
-        current_brightness = file_result.ok_value;
-
-        int percent;
-        percent = (atoi(current_brightness) * 100) / atoi(max_brightness);
-
-        free(filepath);
-        free(file_result.ok_value); // do not free current_brightness, double free
+        free(result_max_brightness.ok_value);
+        free(result_current_brightness.ok_value);
 
         res.variant = OK;
         res.ok_value = percent;
