@@ -88,6 +88,7 @@
                 rustc
                 systemd
                 cargo
+                clippy
                 rust-analyzer
                 icon-library
                 zsh
