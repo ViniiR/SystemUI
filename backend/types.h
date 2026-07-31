@@ -26,6 +26,8 @@ RESULT(void *, Void)
 RESULT(int, Int)
 RESULT(bool, Bool)
 RESULT(char *, String)
+
+/// ResultHeapString does not need free() on ERR variant
 RESULT(char *, HeapString)
 
 #define RESULT_ERR_MSG_UNKNOWN "Unknown error"
