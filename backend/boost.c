@@ -62,7 +62,7 @@ static const char conservation_filepath[] =
     "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode";
 
 static ResultBool get_is_boost_active() {
-    ResultBool res = {.variant = ERR, .err_msg = "", .ok_value = false};
+    ResultBool res = {.variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = false};
 
     ResultHeapString result_file = read_file(boost_filepath);
     if (result_file.variant == ERR) {
