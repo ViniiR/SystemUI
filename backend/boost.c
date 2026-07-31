@@ -81,6 +81,7 @@ static ResultBool get_is_boost_active() {
 
     res.variant = OK;
     res.ok_value = is_active;
+    res.err_msg = "";
     return res;
 }
 
@@ -103,5 +104,6 @@ static ResultVoid set_boost_mode(bool value) {
     }
 
     res.variant = OK;
+    res.err_msg = "";
     return res;
 }

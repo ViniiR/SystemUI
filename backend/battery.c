@@ -105,6 +105,7 @@ static ResultHeapString get_battery_directory() {
 
             res.variant = OK;
             res.ok_value = buf;
+            res.err_msg = "";
             return res;
         }
     }
@@ -164,6 +165,7 @@ static ResultInt get_battery_percentage() {
 
     res.variant = OK;
     res.ok_value = value;
+    res.err_msg = "";
     return res;
 }
 
@@ -201,6 +203,7 @@ static ResultInt get_charging_status() {
 
     res.variant = OK;
     res.ok_value = status;
+    res.err_msg = "";
     return res;
 }
 
@@ -250,6 +253,7 @@ static ResultHeapString allocate_suffix(const ChargingStatus status) {
 
     res.variant = OK;
     res.ok_value = suffix;
+    res.err_msg = "";
     return res;
 }
 
@@ -298,5 +302,6 @@ static ResultHeapString get_battery_icon() {
 
     res.variant = OK;
     res.ok_value = buf;
+    res.err_msg = "";
     return res;
 }

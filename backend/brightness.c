@@ -126,6 +126,7 @@ static ResultHeapString read_brightness_from(
 
     res.variant = OK;
     res.ok_value = value;
+    res.err_msg = "";
     return res;
 }
 
@@ -169,6 +170,7 @@ static ResultInt get_brightness() {
 
         res.variant = OK;
         res.ok_value = percent;
+        res.err_msg = "";
         return res;
     }
 
