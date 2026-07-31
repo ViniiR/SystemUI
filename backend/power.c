@@ -1,4 +1,5 @@
 #include "power.h"
+#include "systemd/sd-bus-vtable.h"
 #include "types.h"
 #include "util.h"
 #include <systemd/sd-bus.h>
@@ -11,27 +12,27 @@ const sd_bus_vtable POWER_VTABLE[] = {
     SD_BUS_METHOD_WITH_NAMES(
         "Shutdown",
         "",
-        SD_BUS_PARAM(),
         "",
-        SD_BUS_PARAM(),
+        "",
+        "",
         shutdown_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
     SD_BUS_METHOD_WITH_NAMES(
         "Reboot",
         "",
-        SD_BUS_PARAM(),
         "",
-        SD_BUS_PARAM(),
+        "",
+        "",
         reboot_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
     SD_BUS_METHOD_WITH_NAMES(
         "Logout",
         "",
-        SD_BUS_PARAM(),
         "",
-        SD_BUS_PARAM(),
+        "",
+        "",
         logout_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),

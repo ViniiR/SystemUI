@@ -17,14 +17,14 @@ const sd_bus_vtable BRIGHTNESS_VTABLE[] = {
         "u",
         SD_BUS_PARAM(percentage),
         "",
-        SD_BUS_PARAM(),
+        "",
         set_brightness_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
     SD_BUS_METHOD_WITH_NAMES(
         "GetBrightness",
         "",
-        SD_BUS_PARAM(),
+        "",
         "u",
         SD_BUS_PARAM(percentage),
         get_brightness_handler,

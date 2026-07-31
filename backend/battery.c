@@ -11,7 +11,7 @@
 const char BATTERY_PATH[] = "/com/vinii/vgsc/Battery";
 const char BATTERY_INTERFACE[] = "com.vinii.vgsc.Battery";
 
-// TODO: on all empty input/output use "" not empty SD_BUS_PARAM()
+// TODO: use SD_BUS_METHOD_WITH_ARGS on all SD_BUS_METHOD_WITH_NAMES
 const sd_bus_vtable BATTERY_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
     SD_BUS_METHOD_WITH_NAMES(
@@ -36,7 +36,6 @@ static ResultInt get_battery_percentage();
 int get_battery_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    // TODO: silently failing
     ResultHeapString result_icon = get_battery_icon();
     if (result_icon.variant == ERR) {
         return sd_bus_error_setf(
