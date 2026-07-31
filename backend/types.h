@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 typedef enum { OK, ERR } ResultVariant;
 
 /// INFO:
@@ -22,6 +24,7 @@ typedef enum { OK, ERR } ResultVariant;
 
 RESULT(void *, Void)
 RESULT(int, Int)
+RESULT(bool, Bool)
 RESULT(char *, String)
 RESULT(char *, HeapString)
 
