@@ -69,7 +69,7 @@ ResultVoid exec_command(
     const char *command,
     const char *modes
 ) {
-    static thread_local char error_message[4096];
+    static thread_local char error_message[STRING_KB];
 
     ResultVoid res = RESULT_VOID_DEFAULT;
     FILE *fp;

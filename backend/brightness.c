@@ -106,21 +106,21 @@ static ResultHeapString read_brightness_from(
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
     };
 
-    char *filepath;
-    int size =
-        asprintf(&filepath, "%s/%s%s", BACKLIGHT_PATH, dir_name, file_name);
-    if (size == -1) {
-        res.err_msg = "Failed to alloc";
-        return res;
-    }
+    char filepath[STRING_KB];
+    snprintf(
+        filepath,
+        sizeof(filepath),
+        "%s/%s%s",
+        BACKLIGHT_PATH,
+        dir_name,
+        file_name
+    );
 
     ResultHeapString file_result = read_file(filepath);
     if (file_result.variant == ERR) {
-        free(filepath);
         res.err_msg = file_result.err_msg;
         return res;
     }
-    free(filepath);
 
     char *value = file_result.ok_value;
 
@@ -179,8 +179,6 @@ static ResultInt get_brightness() {
 static ResultVoid set_brightness(
     const unsigned int percent, const char *filepath, const char *max_filepath
 ) {
-    static const int MAX_LEN = sizeof(char) * 50;
-
     ResultVoid res = RESULT_VOID_DEFAULT;
 
     ResultHeapString result_max = read_file(max_filepath);
@@ -192,8 +190,8 @@ static ResultVoid set_brightness(
     int calculated_value =
         ceil((float)percent * atoi(result_max.ok_value) / 100);
 
-    char *str = malloc(MAX_LEN);
-    snprintf(str, MAX_LEN, "%i", calculated_value);
+    char str[STRING_KB];
+    snprintf(str, sizeof(str), "%i", calculated_value);
 
     ResultVoid result = write_file(filepath, str);
     if (result.variant == ERR) {
@@ -202,7 +200,6 @@ static ResultVoid set_brightness(
     }
 
     free(result_max.ok_value);
-    free(str);
 
     res.variant = OK;
     res.err_msg = "";
@@ -224,28 +221,20 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
             continue;
         }
 
-        char *filepath = malloc(PATH_MAX);
-        if (filepath == NULL) {
-            res.err_msg = "Failed to alloc";
-            return res;
-        }
+        char filepath[STRING_KB];
         snprintf(
             filepath,
-            PATH_MAX,
+            sizeof(filepath),
             "%s/%s%s",
             BACKLIGHT_PATH,
             entry->d_name,
             CURRENT_BRIGHTNESS_PATH
         );
 
-        char *max_filepath = malloc(PATH_MAX);
-        if (max_filepath == NULL) {
-            res.err_msg = "Failed to alloc";
-            return res;
-        }
+        char max_filepath[STRING_KB];
         snprintf(
             max_filepath,
-            PATH_MAX,
+            sizeof(max_filepath),
             "%s/%s%s",
             BACKLIGHT_PATH,
             entry->d_name,
@@ -257,9 +246,6 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
             res.err_msg = result.err_msg;
             return res;
         }
-
-        free(filepath);
-        free(max_filepath);
     }
 
     closedir(dir);
