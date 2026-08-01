@@ -47,7 +47,11 @@ ResultVoid write_file(const char *path, const char *content) {
         return res;
     }
 
-    fprintf(f, "%s", content);
+    int chars_written = fprintf(f, "%s", content);
+    if (chars_written == -1) {
+        res.err_msg = "Failed to write to file";
+        return res;
+    }
 
     fclose(f);
 
