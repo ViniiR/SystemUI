@@ -177,7 +177,7 @@
             </object>
             </child>
             <child>
-            <object class="GtkButton" id="power-mode">
+            <object class="GtkButton" id="power-mode-button">
                 <property name="label">Power Mode</property>
                 <layout>
                     <property name="column">2</property>
@@ -189,7 +189,7 @@
             </child>
 
             <child>
-            <object class="GtkButton" id="boost-mode">
+            <object class="GtkButton" id="boost-mode-button">
                 <property name="label">Boost Mode</property>
                 <layout>
                     <property name="column">0</property>

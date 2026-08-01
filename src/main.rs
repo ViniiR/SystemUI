@@ -6,6 +6,7 @@ use gtk::{prelude::*, CssProvider};
 use crate::types::Program;
 
 mod battery;
+mod boost;
 mod brightness;
 mod power;
 mod types;
@@ -60,6 +61,11 @@ fn activate(app: &Application) {
 
         if let Err(e) = battery::handle_battery(&builder, dbus_connection.clone()) {
             g_critical!(None, "Battery error: {e:?}");
+            return;
+        };
+
+        if let Err(e) = boost::handle_boost(&builder, dbus_connection.clone()) {
+            g_critical!(None, "Boost error: {e:?}");
             return;
         };
     });

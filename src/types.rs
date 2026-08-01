@@ -23,6 +23,8 @@ pub mod dbus {
         pub const AUDIO: &str = "/com/vinii/vgsc/Audio";
         pub const BATTERY: &str = "/com/vinii/vgsc/Battery";
         pub const POWER: &str = "/com/vinii/vgsc/Power";
+        pub const BOOST: &str = "/com/vinii/vgsc/Boost";
+        pub const CONSERVATION: &str = "/com/vinii/vgsc/Conservation";
 
         pub fn to_interface(interface: &str) -> String {
             interface
@@ -41,6 +43,8 @@ pub mod dbus {
         pub const REBOOT: &str = "Reboot";
         pub const LOGOUT: &str = "Logout";
         pub const GET_BATTERY: &str = "GetBattery";
+        pub const TOGGLE_BOOST: &str = "ToggleBoost";
+        pub const TOGGLE_CONSERVATION: &str = "ToggleConservation";
     }
 
     pub struct Timeout;
