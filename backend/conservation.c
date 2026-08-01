@@ -83,20 +83,9 @@ static ResultBool get_is_conservation_active() {
 static ResultVoid set_conservation_mode(const bool value) {
     ResultVoid res = RESULT_VOID_DEFAULT;
 
-    char command[STRING_KB];
-
-    snprintf(
-        command,
-        sizeof(command),
-        "echo %i | tee %s > /dev/null",
-        value,
-        conservation_filepath
-    );
-
-    // TODO: use write_file
-    ResultVoid result_command = exec_command(NULL, 0, command, "r");
-    if (result_command.variant == ERR) {
-        res.err_msg = result_command.err_msg;
+    ResultVoid result_write = write_file(conservation_filepath, value ? "1" : "0");
+    if (result_write.variant == ERR) {
+        res.err_msg = result_write.err_msg;
         return res;
     }
 
