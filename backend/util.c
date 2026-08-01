@@ -5,11 +5,11 @@
 #include <threads.h>
 
 ResultHeapString read_file(const char *path) {
-    FILE *f = fopen(path, "r");
     ResultHeapString res = {
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
     };
 
+    FILE *f = fopen(path, "r");
     if (f == NULL) {
         res.err_msg = "File is null";
         return res;
@@ -36,19 +36,20 @@ ResultHeapString read_file(const char *path) {
     value[strcspn(value, "\r\n")] = 0;
 
     fclose(f);
+    free(max);
 
     res.variant = OK;
-    res.err_msg = "";
     res.ok_value = value;
+    res.err_msg = "";
     return res;
 }
 
 ResultVoid write_file(const char *path, const char *content) {
-    FILE *f = fopen(path, "w");
     ResultVoid res = {
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL
     };
 
+    FILE *f = fopen(path, "w");
     if (f == NULL) {
         res.err_msg = "Failed to open file";
         return res;
