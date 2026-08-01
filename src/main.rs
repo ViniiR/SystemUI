@@ -42,8 +42,7 @@ fn activate(app: &Application) {
         return;
     };
 
-    // TODO: spawn future local?
-    glib::MainContext::default().spawn_local(async move {
+    glib::spawn_future_local(async move {
         // NOTE: getting system bus
         let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::System).await else {
             g_critical!(None, "Failed to connect with DBus");
