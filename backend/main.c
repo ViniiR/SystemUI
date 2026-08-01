@@ -1,6 +1,7 @@
 #include "battery.h"
 #include "boost.h"
 #include "brightness.h"
+#include "conservation.h"
 #include "power.h"
 #include <stdio.h>
 #include <string.h>
@@ -71,6 +72,19 @@ int main(int argc, char **argv) {
     if (err < 0)
         return fail_with_message("Failed to add object vtable", p_dbus, err);
     printf("Added '%s' object vtable\n", BOOST_PATH);
+
+    // Conservation controller
+    err = sd_bus_add_object_vtable(
+        p_dbus,
+        NULL,
+        CONSERVATION_PATH,
+        CONSERVATION_INTERFACE,
+        CONSERVATION_VTABLE,
+        NULL
+    );
+    if (err < 0)
+        return fail_with_message("Failed to add object vtable", p_dbus, err);
+    printf("Added '%s' object vtable\n", CONSERVATION_PATH);
 
     err = sd_bus_request_name(p_dbus, DBUS_SERVICE_NAME, 0);
     if (err < 0)

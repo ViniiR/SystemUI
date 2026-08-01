@@ -1,0 +1,105 @@
+#include "conservation.h"
+#include "types.h"
+#include "util.h"
+#include <systemd/sd-bus.h>
+
+const char CONSERVATION_PATH[] = "/com/vinii/vgsc/Conservation";
+const char CONSERVATION_INTERFACE[] = "com.vinii.vgsc.Conservation";
+
+const sd_bus_vtable CONSERVATION_VTABLE[] = {
+    SD_BUS_VTABLE_START(0),
+    SD_BUS_METHOD_WITH_NAMES(
+        "ToggleConservation",
+        "",
+        "",
+        "",
+        "",
+        toggle_conservation_handler,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
+    SD_BUS_VTABLE_END
+};
+//
+
+static ResultBool get_is_conservation_active();
+static ResultVoid set_conservation_mode(const bool value);
+
+//
+
+int toggle_conservation_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    ResultBool result_is_conversation_active = get_is_conservation_active();
+    if (result_is_conversation_active.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to get conservation, Error: %s",
+            result_is_conversation_active.err_msg
+        );
+    }
+    ResultVoid result_set_conversation =
+        set_conservation_mode(!result_is_conversation_active.ok_value);
+    if (result_set_conversation.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to set conservation, Error: %s",
+            result_set_conversation.err_msg
+        );
+    }
+
+    return sd_bus_reply_method_return(p_msg, NULL);
+}
+
+//
+
+static const char conservation_filepath[] =
+    "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode";
+
+static ResultBool get_is_conservation_active() {
+    ResultBool res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = false
+    };
+
+    bool is_active = false;
+
+    ResultHeapString result_file = read_file(conservation_filepath);
+    if (result_file.variant == ERR) {
+        res.err_msg = result_file.err_msg;
+        return res;
+    }
+    if (strcmp(result_file.ok_value, "1") == 0) {
+        is_active = true;
+    }
+
+    res.variant = OK;
+    res.err_msg = "";
+    res.ok_value = is_active;
+    return res;
+}
+
+static ResultVoid set_conservation_mode(const bool value) {
+    ResultVoid res = RESULT_VOID_DEFAULT;
+
+    char command[STRING_KB];
+
+    snprintf(
+        command,
+        sizeof(command),
+        "echo %i | tee %s > /dev/null",
+        value,
+        conservation_filepath
+    );
+
+    // TODO: use write_file
+    ResultVoid result_command = exec_command(NULL, 0, command, "r");
+    if (result_command.variant == ERR) {
+        res.err_msg = result_command.err_msg;
+        return res;
+    }
+
+    res.variant = OK;
+    res.err_msg = "";
+    return res;
+}
