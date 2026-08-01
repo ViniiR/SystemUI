@@ -1,4 +1,5 @@
 #include "types.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,31 +16,22 @@ ResultHeapString read_file(const char *path) {
         return res;
     }
 
-    char *max = malloc(sizeof(char) * 50);
-    if (max == NULL) {
-        free(max);
-        fclose(f);
+    char *buffer = NULL;
+    size_t len = 0;
 
-        res.err_msg = "Failed to alloc";
-        return res;
-    }
-
-    char *value = fgets(max, 50, f);
-    if (value == NULL) {
-        free(max);
-        fclose(f);
-
+    ssize_t bytes_read = getdelim(&buffer, &len, '\0', f); // malloc
+    fclose(f);
+    if (bytes_read == -1) {
+        free(buffer);
         res.err_msg = "Failed to read file content";
         return res;
     }
-    // Remove trailing newlines
-    value[strcspn(value, "\r\n")] = 0;
 
-    fclose(f);
-    free(max);
+    // Remove trailing newlines
+    buffer[strcspn(buffer, "\r\n")] = 0;
 
     res.variant = OK;
-    res.ok_value = value;
+    res.ok_value = buffer;
     res.err_msg = "";
     return res;
 }
