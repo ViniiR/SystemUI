@@ -29,23 +29,24 @@ static ResultVoid set_conservation_mode(const bool value);
 int toggle_conservation_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    ResultBool result_is_conversation_active = get_is_conservation_active();
-    if (result_is_conversation_active.variant == ERR) {
+    ResultBool result_is_conservation_active = get_is_conservation_active();
+    if (result_is_conservation_active.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
             SD_BUS_ERROR_FAILED,
             "Failed to get conservation, Error: %s",
-            result_is_conversation_active.err_msg
+            result_is_conservation_active.err_msg
         );
     }
-    ResultVoid result_set_conversation =
-        set_conservation_mode(!result_is_conversation_active.ok_value);
-    if (result_set_conversation.variant == ERR) {
+
+    ResultVoid result_set_conservation =
+        set_conservation_mode(!result_set_conservation.ok_value);
+    if (result_set_conservation.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
             SD_BUS_ERROR_FAILED,
             "Failed to set conservation, Error: %s",
-            result_set_conversation.err_msg
+            result_set_conservation.err_msg
         );
     }
 
