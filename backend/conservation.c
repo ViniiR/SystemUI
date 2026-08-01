@@ -40,7 +40,7 @@ int toggle_conservation_handler(
     }
 
     ResultVoid result_set_conservation =
-        set_conservation_mode(!result_set_conservation.ok_value);
+        set_conservation_mode(!result_is_conservation_active.ok_value);
     if (result_set_conservation.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
