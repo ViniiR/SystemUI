@@ -58,8 +58,6 @@ int toggle_boost_handler(
 //
 
 static const char boost_filepath[] = "/sys/devices/system/cpu/cpufreq/boost";
-static const char conservation_filepath[] =
-    "/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode";
 
 static ResultBool get_is_boost_active() {
     ResultBool res = {
@@ -88,18 +86,9 @@ static ResultBool get_is_boost_active() {
 static ResultVoid set_boost_mode(bool value) {
     ResultVoid res = RESULT_VOID_DEFAULT;
 
-    char command[STRING_KB];
-    snprintf(
-        command,
-        sizeof(command),
-        "echo %i | tee %s > /dev/null",
-        value,
-        boost_filepath
-    );
-
-    ResultVoid result_command = exec_command(NULL, 0, command, "r");
-    if (result_command.variant == ERR) {
-        res.err_msg = result_command.err_msg;
+    ResultVoid result_write = write_file(boost_filepath, value ? "1" : "0");
+    if (result_write.variant == ERR) {
+        res.err_msg = result_write.err_msg;
         return res;
     }
 
