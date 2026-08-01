@@ -8,6 +8,7 @@ use crate::types::Program;
 mod battery;
 mod boost;
 mod brightness;
+mod conservation;
 mod power;
 mod types;
 
@@ -66,6 +67,11 @@ fn activate(app: &Application) {
 
         if let Err(e) = boost::handle_boost(&builder, dbus_connection.clone()) {
             g_critical!(None, "Boost error: {e:?}");
+            return;
+        };
+
+        if let Err(e) = conservation::handle_conservation(&builder, dbus_connection.clone()) {
+            g_critical!(None, "Conservation error: {e:?}");
             return;
         };
     });
