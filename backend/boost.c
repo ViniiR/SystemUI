@@ -14,8 +14,8 @@ const sd_bus_vtable BOOST_VTABLE[] = {
         "ToggleBoost",
         "",
         "",
-        "",
-        "",
+        "b",
+        SD_BUS_PARAM(is_active),
         toggle_boost_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
@@ -52,7 +52,7 @@ int toggle_boost_handler(
         );
     }
 
-    return sd_bus_reply_method_return(p_msg, NULL);
+    return sd_bus_reply_method_return(p_msg, "b", !result_is_active.ok_value);
 }
 
 //
