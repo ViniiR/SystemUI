@@ -1,21 +1,16 @@
 use gtk::{
     gio::{DBusCallFlags, DBusConnection},
     glib::{self, g_warning, VariantTy},
-    prelude::{ButtonExt, WidgetExt},
+    prelude::ButtonExt,
     Builder, Button,
 };
 
-use crate::types::HandlerError;
 use crate::types::{dbus, Program};
+use crate::{types::HandlerError, ui};
 
-pub fn handle_boost(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError<'_>> {
-    let boost = builder
-        .object::<Button>("boost-mode-button")
-        .ok_or(HandlerError::ObjectError("Failed to get boost-mode-button"))?;
-
-    // TODO: get current boost status and update UI at startup!!!!!!!!!!!!!!!!!!!!
-    boost.connect_clicked(move |btn| {
-        let res = conn.call_future(
+async fn click_handler(conn: DBusConnection, button: Button) {
+    let res = conn
+        .call_future(
             Some(Program::BACKEND_NAME),
             dbus::Controllers::BOOST,
             &dbus::Controllers::to_interface(dbus::Controllers::BOOST),
@@ -24,27 +19,58 @@ pub fn handle_boost(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
             Some(VariantTy::TUPLE),
             DBusCallFlags::NONE,
             dbus::Timeout::NONE,
-        );
+        )
+        .await;
 
-        glib::spawn_future_local(glib::clone!(
-            #[strong]
-            btn,
-            async move {
-                let res = res.await;
+    match &res {
+        Ok(_v) if let Some(b) = _v.child_value(0).get::<bool>() => {
+            ui::update_button_active(&button, b)
+        }
+        e => g_warning!(None, "DBus call error: {e:?}"),
+    };
+}
 
-                match &res {
-                    Ok(_v) if let Some(b) = _v.child_value(0).get::<bool>() => {
-                        const ACTIVE: &str = "button-active";
-                        const INACTIVE: &str = "button-inactive";
+pub fn handle_boost(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError<'_>> {
+    let boost = builder
+        .object::<Button>("boost-mode-button")
+        .ok_or(HandlerError::ObjectError("Failed to get boost-mode-button"))?;
 
-                        btn.add_css_class(if b { ACTIVE } else { INACTIVE });
-                        btn.remove_css_class(if b { INACTIVE } else { ACTIVE });
-                    }
-                    e => g_warning!(None, "DBus call error: {e:?}"),
-                };
-            }
-        ));
-    });
+    boost.connect_clicked(glib::clone!(
+        #[strong]
+        conn,
+        move |btn| {
+            glib::spawn_future_local(click_handler(conn.clone(), btn.clone()));
+        }
+    ));
+
+    // Get boost on startup
+    glib::spawn_future_local(glib::clone!(
+        #[strong]
+        conn,
+        #[weak]
+        boost,
+        async move {
+            let res = conn
+                .call_future(
+                    Some(Program::BACKEND_NAME),
+                    dbus::Controllers::BOOST,
+                    &dbus::Controllers::to_interface(dbus::Controllers::BOOST),
+                    dbus::Methods::GET_BOOST,
+                    None,
+                    Some(VariantTy::TUPLE),
+                    DBusCallFlags::NONE,
+                    dbus::Timeout::NONE,
+                )
+                .await;
+
+            match &res {
+                Ok(_v) if let Some(b) = _v.child_value(0).get::<bool>() => {
+                    ui::update_button_active(&boost, b)
+                }
+                e => g_warning!(None, "DBus call error: {e:?}"),
+            };
+        }
+    ));
 
     Ok(())
 }

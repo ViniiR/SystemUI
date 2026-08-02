@@ -19,6 +19,15 @@ const sd_bus_vtable BOOST_VTABLE[] = {
         toggle_boost_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
+    SD_BUS_METHOD_WITH_NAMES(
+        "GetBoost",
+        "",
+        "",
+        "b",
+        SD_BUS_PARAM(is_active),
+        get_boost_handler,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
     SD_BUS_VTABLE_END
 };
 
@@ -53,6 +62,22 @@ int toggle_boost_handler(
     }
 
     return sd_bus_reply_method_return(p_msg, "b", !result_is_active.ok_value);
+}
+
+int get_boost_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    ResultBool result_is_active = get_is_boost_active();
+    if (result_is_active.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to get boost, Error: %s",
+            result_is_active.err_msg
+        );
+    }
+
+    return sd_bus_reply_method_return(p_msg, "b", result_is_active.ok_value);
 }
 
 //

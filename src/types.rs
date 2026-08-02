@@ -44,7 +44,9 @@ pub mod dbus {
         pub const LOGOUT: &str = "Logout";
         pub const GET_BATTERY: &str = "GetBattery";
         pub const TOGGLE_BOOST: &str = "ToggleBoost";
+        pub const GET_BOOST: &str = "GetBoost";
         pub const TOGGLE_CONSERVATION: &str = "ToggleConservation";
+        pub const GET_CONSERVATION: &str = "GetConservation";
     }
 
     pub struct Timeout;

@@ -11,6 +11,7 @@ mod brightness;
 mod conservation;
 mod power;
 mod types;
+mod ui;
 
 fn main() -> glib::ExitCode {
     let app = Application::builder().application_id(Program::NAME).build();
