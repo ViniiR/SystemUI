@@ -5,6 +5,7 @@ use gtk::{prelude::*, CssProvider};
 
 use crate::types::Program;
 
+mod audio;
 mod battery;
 mod boost;
 mod brightness;
@@ -72,6 +73,11 @@ fn activate(app: &Application) {
 
         if let Err(e) = conservation::handle_conservation(&builder, dbus_connection.clone()) {
             g_critical!(None, "Conservation error: {e:?}");
+            return;
+        };
+
+        if let Err(e) = audio::handle_audio(&builder, dbus_connection.clone()) {
+            g_critical!(None, "Audio error: {e:?}");
             return;
         };
     });
