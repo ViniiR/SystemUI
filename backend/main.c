@@ -13,6 +13,7 @@ sd_bus *p_dbus = NULL;
 
 static int fail_with_message(const char message[], sd_bus *p, const int code);
 
+// TODO: OPTIONAL: add cpu freq governor option
 int main(int argc, char **argv) {
     int err = 0;
 
