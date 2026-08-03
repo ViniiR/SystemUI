@@ -115,6 +115,12 @@ ResultVoid exec_command_as_user(
 ) {
     ResultVoid res = RESULT_VOID_DEFAULT;
 
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        res.err_msg = "Failed fork pipe";
+        return res;
+    }
+
     pid_t pid = fork();
     if (pid < 0) {
         res.err_msg = "Failed to fork process";
@@ -123,8 +129,8 @@ ResultVoid exec_command_as_user(
 
     // Run as child process
     if (pid == 0) {
-        // signal(SIGCHLD, SIG_DFL);
-        //
+        close(pipefd[0]);
+
         char runtime_dir[64];
         snprintf(runtime_dir, sizeof(runtime_dir), "/run/user/%d", target_uid);
         setenv("XDG_RUNTIME_DIR", runtime_dir, 1);
@@ -139,10 +145,15 @@ ResultVoid exec_command_as_user(
             _exit(-2);
         }
 
+        write(pipefd[1], output, strlen(output) + 1);
+        close(pipefd[1]);
+
         _exit(0);
     }
     // Run as parent process
     else if (pid > 0) {
+        close(pipefd[1]);
+
         int status;
         waitpid(pid, &status, 0);
         if (WIFEXITED(status)) {
@@ -161,6 +172,9 @@ ResultVoid exec_command_as_user(
             res.err_msg = "Process failed or exited abnormally";
             return res;
         }
+
+        read(pipefd[0], output, size);
+        close(pipefd[0]);
 
         res.variant = OK;
         res.err_msg = "";
