@@ -1,4 +1,7 @@
+#include "sys/types.h"
+#include "sys/wait.h"
 #include "types.h"
+#include "unistd.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,5 +103,69 @@ ResultVoid exec_command(
 
     res.variant = OK;
     res.err_msg = "";
+    return res;
+}
+
+ResultVoid exec_command_as_user(
+    char *output,
+    const unsigned int size,
+    const char *command,
+    const char *modes,
+    const uid_t target_uid
+) {
+    ResultVoid res = RESULT_VOID_DEFAULT;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        res.err_msg = "Failed to fork process";
+        return res;
+    }
+
+    // Run as child process
+    if (pid == 0) {
+        // signal(SIGCHLD, SIG_DFL);
+        //
+        char runtime_dir[64];
+        snprintf(runtime_dir, sizeof(runtime_dir), "/run/user/%d", target_uid);
+        setenv("XDG_RUNTIME_DIR", runtime_dir, 1);
+        if (setgid(target_uid) != 0 || setuid(target_uid) != 0) {
+            // res.err_msg = "Failed to drop process privileges";
+            _exit(-1);
+        }
+
+        ResultVoid result_exec = exec_command(output, size, command, modes);
+        if (result_exec.variant == ERR) {
+            // res.err_msg = result_exec.err_msg;
+            _exit(-2);
+        }
+
+        _exit(0);
+    }
+    // Run as parent process
+    else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            int exit_code = WEXITSTATUS(status);
+            if (exit_code != 0) {
+                res.err_msg = "Child process exited with failure code";
+                printf("Terminated by code: %i\n", exit_code);
+                return res;
+            }
+        } else if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            res.err_msg = "Child process terminated by signal";
+            printf("Terminated by signal: %i\n", sig);
+            return res;
+        } else {
+            res.err_msg = "Process failed or exited abnormally";
+            return res;
+        }
+
+        res.variant = OK;
+        res.err_msg = "";
+        return res;
+    }
+
     return res;
 }
