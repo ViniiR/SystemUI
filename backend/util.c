@@ -127,8 +127,8 @@ ResultVoid exec_command_as_user(
         return res;
     }
 
-    // Run as child process
     // TODO: this is the only part of the application that doesn't propagate errors up.
+    // Run as child process
     if (pid == 0) {
         close(pipefd[0]);
 
@@ -146,7 +146,7 @@ ResultVoid exec_command_as_user(
             _exit(-2);
         }
 
-        write(pipefd[1], output, strlen(output) + 1);
+        write(pipefd[1], output, size);
         close(pipefd[1]);
 
         _exit(0);
