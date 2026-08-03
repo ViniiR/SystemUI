@@ -3,6 +3,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <systemd/sd-bus.h>
 
 const char AUDIO_PATH[] = "/com/vinii/vgsc/Audio";
@@ -42,9 +43,14 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
 
 static const unsigned int UID = 1000;
 
+typedef struct {
+    bool is_muted;
+    int volume;
+} VolumeStatus;
+
 //
 
-static ResultInt get_pipewire_volume();
+static ResultHeapStructPointer get_pipewire_volume();
 static ResultVoid set_pipewire_volume(unsigned int percentage);
 static ResultBool get_is_pipewire_muted();
 static ResultVoid toggle_pipewire_muted();
@@ -54,7 +60,7 @@ static ResultVoid toggle_pipewire_muted();
 int get_audio_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    ResultInt result_volume = get_pipewire_volume();
+    ResultHeapStructPointer result_volume = get_pipewire_volume();
     if (result_volume.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
@@ -64,7 +70,15 @@ int get_audio_handler(
         );
     }
 
-    return sd_bus_reply_method_return(p_msg, "ub", 1123, false);
+    VolumeStatus *volume_status = (VolumeStatus *)result_volume.ok_value;
+
+    int return_value = sd_bus_reply_method_return(
+        p_msg, "ub", volume_status->volume, volume_status->is_muted
+    );
+
+    free(result_volume.ok_value);
+
+    return return_value;
 }
 
 int set_audio_handler(
@@ -125,10 +139,9 @@ int toggle_audio_muted_handler(
 // 1000 it's not ideal and likely a temporary solution, as far as temporary
 // solutions last
 
-// TODO ResultStruct void * with is_muted and percent
-static ResultInt get_pipewire_volume() {
-    ResultInt res = {
-        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = 0
+static ResultHeapStructPointer get_pipewire_volume() {
+    ResultHeapStructPointer res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL
     };
 
     char command[STRING_KB];
@@ -142,8 +155,6 @@ static ResultInt get_pipewire_volume() {
         res.err_msg = result_exec.err_msg;
         return res;
     }
-
-    printf("exec out %s\n",exec_output);
 
     //
 
@@ -163,12 +174,26 @@ static ResultInt get_pipewire_volume() {
         return res;
     }
 
-    printf("Ouput %s\n", volume_output);
-
     //
+
+    int volume = atof(volume_output) * 100.0;
+
+    bool is_muted = false;
+    if (strstr(exec_output, "[MUTED]") != NULL) {
+        is_muted = true;
+    }
+
+    VolumeStatus *status = malloc(sizeof(VolumeStatus));
+    if (status == NULL) {
+        res.err_msg = "Failed to alloc";
+        return res;
+    }
+    status->is_muted = is_muted;
+    status->volume = volume;
 
     res.variant = OK;
     res.err_msg = "";
+    res.ok_value = status;
     return res;
 }
 
