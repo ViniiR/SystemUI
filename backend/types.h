@@ -29,6 +29,7 @@ RESULT(char *, String)
 
 /// ResultHeapString does not need free() on ERR variant
 RESULT(char *, HeapString)
+RESULT(void *, StructPointer)
 
 #define RESULT_ERR_MSG_UNKNOWN "Unknown error"
 

@@ -1,11 +1,9 @@
 #include "audio.h"
-#include <systemd/sd-bus.h>
-
+#include "types.h"
+#include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include <systemd/sd-bus.h>
 
 const char AUDIO_PATH[] = "/com/vinii/vgsc/Audio";
 const char AUDIO_INTERFACE[] = "com.vinii.vgsc.Audio";
@@ -42,24 +40,65 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
     SD_BUS_VTABLE_END
 };
 
+static const unsigned int UID = 1000;
+
 //
 
-static int set_pipewire_volume(uid_t target_uid, const char *volume_str);
+static ResultInt get_pipewire_volume();
+static ResultVoid set_pipewire_volume(unsigned int percentage);
+static ResultBool get_is_pipewire_muted();
+static ResultVoid toggle_pipewire_muted();
 
 //
 
 int get_audio_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
+    ResultInt result_volume = get_pipewire_volume();
+    if (result_volume.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to get volume, Error: %s",
+            result_volume.err_msg
+        );
+    }
 
-    return sd_bus_reply_method_return(p_msg, NULL);
+    return sd_bus_reply_method_return(p_msg, "ub", 1123, false);
 }
 
 int set_audio_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    // TODO: WORKS
-    set_pipewire_volume(1000, "90%");
+    uint32_t value;
+    int res;
+
+    res = sd_bus_message_read(p_msg, "u", &value);
+    if (res < 0) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_INVALID_ARGS,
+            "Expected uint32_t percentage"
+        );
+    }
+
+    if (value < 0 || value > 100) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_INVALID_ARGS,
+            "Percentage out of bounds '0..=100'"
+        );
+    }
+
+    ResultVoid result_volume = set_pipewire_volume(value);
+    if (result_volume.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to set volume, Error: %s",
+            result_volume.err_msg
+        );
+    }
 
     return sd_bus_reply_method_return(p_msg, NULL);
 }
@@ -67,40 +106,107 @@ int set_audio_handler(
 int toggle_audio_muted_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
+    ResultVoid result_muted = toggle_pipewire_muted();
+    if (result_muted.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to toggle volume muted, Error: %s",
+            result_muted.err_msg
+        );
+    }
 
     return sd_bus_reply_method_return(p_msg, NULL);
 }
 
 //
 
-// TODO: fix ai generated code
-static int set_pipewire_volume(uid_t target_uid, const char *volume_str) {
-    pid_t pid = fork();
-    if (pid == 0) {
-        char runtime_dir[64];
-        snprintf(runtime_dir, sizeof(runtime_dir), "/run/user/%d", target_uid);
+// NOTE: this is the hackiest module in the application, running command as user
+// 1000 it's not ideal and likely a temporary solution, as far as temporary
+// solutions last
 
-        setenv("XDG_RUNTIME_DIR", runtime_dir, 1);
+// TODO ResultStruct void * with is_muted and percent
+static ResultInt get_pipewire_volume() {
+    ResultInt res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = 0
+    };
 
-        if (setgid(target_uid) != 0 || setuid(target_uid) != 0) {
-            perror("Failed to drop privileges");
-            exit(1);
-        }
+    char command[STRING_KB];
+    snprintf(command, sizeof(command), "wpctl get-volume @DEFAULT_SINK@");
 
-        execlp(
-            "wpctl",
-            "wpctl",
-            "set-volume",
-            "@DEFAULT_AUDIO_SINK@",
-            volume_str,
-            NULL
-        );
-        perror("execlp failed");
-        exit(1);
-    } else if (pid > 0) {
-        int status;
-        waitpid(pid, &status, 0);
-        return WIFEXITED(status) && WEXITSTATUS(status) == 0 ? 0 : -1;
+    char exec_output[STRING_KB];
+    ResultVoid result_exec = exec_command_as_user(
+        exec_output, sizeof(exec_output), command, "r", UID
+    );
+    if (result_exec.variant == ERR) {
+        res.err_msg = result_exec.err_msg;
+        return res;
     }
-    return -1;
+
+    printf("exec out %s\n",exec_output);
+
+    //
+
+    char volume_input[STRING_KB];
+    snprintf(
+        volume_input,
+        sizeof(volume_input),
+        "echo \"%s\" | awk '{printf $2}'",
+        exec_output
+    );
+
+    char volume_output[STRING_KB];
+    ResultVoid result_volume =
+        exec_command(volume_output, sizeof(volume_output), volume_input, "r");
+    if (result_volume.variant == ERR) {
+        res.err_msg = result_volume.err_msg;
+        return res;
+    }
+
+    printf("Ouput %s\n", volume_output);
+
+    //
+
+    res.variant = OK;
+    res.err_msg = "";
+    return res;
+}
+
+static ResultVoid set_pipewire_volume(unsigned int percentage) {
+    ResultVoid res = RESULT_VOID_DEFAULT;
+
+    char command[STRING_KB];
+    snprintf(
+        command,
+        sizeof(command),
+        "wpctl set-volume @DEFAULT_SINK@ %i%%",
+        percentage
+    );
+
+    ResultVoid result_exec = exec_command_as_user(NULL, 0, command, "r", UID);
+    if (result_exec.variant == ERR) {
+        res.err_msg = result_exec.err_msg;
+        return res;
+    }
+
+    res.variant = OK;
+    res.err_msg = "";
+    return res;
+}
+
+static ResultVoid toggle_pipewire_muted() {
+    ResultVoid res = RESULT_VOID_DEFAULT;
+
+    char command[STRING_KB];
+    snprintf(command, sizeof(command), "wpctl set-mute @DEFAULT_SINK@ toggle");
+
+    ResultVoid result_exec = exec_command_as_user(NULL, 0, command, "r", UID);
+    if (result_exec.variant == ERR) {
+        res.err_msg = result_exec.err_msg;
+        return res;
+    }
+
+    res.variant = OK;
+    res.err_msg = "";
+    return res;
 }

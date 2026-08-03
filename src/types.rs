@@ -20,11 +20,11 @@ pub mod dbus {
     pub struct Controllers;
     impl Controllers {
         pub const BRIGHTNESS: &str = "/com/vinii/vgsc/Brightness";
-        pub const AUDIO: &str = "/com/vinii/vgsc/Audio";
         pub const BATTERY: &str = "/com/vinii/vgsc/Battery";
         pub const POWER: &str = "/com/vinii/vgsc/Power";
         pub const BOOST: &str = "/com/vinii/vgsc/Boost";
         pub const CONSERVATION: &str = "/com/vinii/vgsc/Conservation";
+        pub const AUDIO: &str = "/com/vinii/vgsc/Audio";
 
         pub fn to_interface(interface: &str) -> String {
             interface
@@ -47,6 +47,9 @@ pub mod dbus {
         pub const GET_BOOST: &str = "GetBoost";
         pub const TOGGLE_CONSERVATION: &str = "ToggleConservation";
         pub const GET_CONSERVATION: &str = "GetConservation";
+        pub const GET_AUDIO: &str = "GetAudio";
+        pub const SET_AUDIO: &str = "SetAudio";
+        pub const TOGGLE_AUDIO_MUTED: &str = "ToggleAudioMuted";
     }
 
     pub struct Timeout;
