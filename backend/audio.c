@@ -1,7 +1,11 @@
-#pragma once
-
 #include "audio.h"
 #include <systemd/sd-bus.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 const char AUDIO_PATH[] = "/com/vinii/vgsc/Audio";
 const char AUDIO_INTERFACE[] = "com.vinii.vgsc.Audio";
@@ -46,47 +50,43 @@ static int set_pipewire_volume(uid_t target_uid, const char *volume_str);
 
 int get_audio_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
-);
+) {
+
+    return sd_bus_reply_method_return(p_msg, NULL);
+}
 
 int set_audio_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    // TODO: proof of concept
-    set_pipewire_volume(1000, "10%");
+    // TODO: WORKS
+    set_pipewire_volume(1000, "90%");
 
     return sd_bus_reply_method_return(p_msg, NULL);
 }
 
 int toggle_audio_muted_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
-);
+) {
+
+    return sd_bus_reply_method_return(p_msg, NULL);
+}
 
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
+// TODO: fix ai generated code
 static int set_pipewire_volume(uid_t target_uid, const char *volume_str) {
     pid_t pid = fork();
     if (pid == 0) {
-        // Child process
         char runtime_dir[64];
         snprintf(runtime_dir, sizeof(runtime_dir), "/run/user/%d", target_uid);
 
-        // Set environment for PipeWire socket discovery
         setenv("XDG_RUNTIME_DIR", runtime_dir, 1);
 
-        // Drop root privileges to target user
         if (setgid(target_uid) != 0 || setuid(target_uid) != 0) {
             perror("Failed to drop privileges");
             exit(1);
         }
 
-        // Run wpctl set-volume @DEFAULT_AUDIO_SINK@ <val>
-        // Example volume_str: "50%" or "0.5" or "5%+"
         execlp(
             "wpctl",
             "wpctl",

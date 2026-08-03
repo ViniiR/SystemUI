@@ -1,4 +1,4 @@
-#include "audio.c"
+#include "audio.h"
 #include "battery.h"
 #include "boost.h"
 #include "brightness.h"
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
         return fail_with_message("Failed to add object vtable", p_dbus, err);
     printf("Added '%s' object vtable\n", CONSERVATION_PATH);
 
-    // AUDIO controller
+    // Audio controller
     err = sd_bus_add_object_vtable(
         p_dbus,
         NULL,
