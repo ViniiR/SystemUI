@@ -1,9 +1,66 @@
-.button-inactive {
-    background-color: red;
-    color: white;
+:root {
+  --prussian: #003153;
+  --enabled: #003153;
+  --enabled-foreground: white;
+  --disabled: #4c4c4c;
+  --disabled-foreground: grey;
+  --dark-white: #505050;
+  --foreground: white;
+}
+
+/* . */
+.main-window {
+  padding: 20px;
+}
+
+.main-grid {
+  /* background-color: white; */
+}
+
+/* . */
+
+.battery-button {
+  border-radius: 50px;
+  background-color: var(--prussian);
+  border: none;
+}
+
+.power-button {
+  border-radius: 50px;
+  background-color: var(--prussian);
+  border: none;
+}
+
+/* . */
+
+.scale {
+}
+.scale highlight {
+  background-color: var(--prussian);
+}
+.scale slider {
+  background-color: var(--foreground);
+}
+.scale trough {
+}
+
+.scale-label {
+}
+
+/* . */
+
+.button {
+  border-radius: 50px;
+  border: none;
 }
 
 .button-active {
-    background-color: blue;
-    color: black;
+  background-color: var(--enabled);
+  font-weight: bold;
+  color: var(--enabled-foreground);
+}
+
+.button-inactive {
+  background-color: var(--disabled);
+  color: var(--disabled-foreground);
 }

@@ -21,6 +21,10 @@
         <property name="default-width">200</property>
         <property name="default-height">400</property>
 
+        <style>
+            <class name="main-window"/>
+        </style>
+
         <child> 
         <object class="GtkGrid" id="main-grid">
             <property name="column-spacing">10</property>
@@ -28,6 +32,10 @@
             <property name="hexpand">True</property>
             <property name="vexpand">True</property>
             <property name="column-homogeneous">True</property>
+
+            <style>
+                <class name="main-grid"/>
+            </style>
 
             <child>
             <object class="GtkButton" id="battery-button">
@@ -37,6 +45,10 @@
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="battery-button"/>
+                </style>
 
                 <child>
                 <object class="GtkBox">
@@ -67,6 +79,11 @@
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="power-button"/>
+                </style>
+
             </object>
             </child>
             <child>
@@ -78,6 +95,11 @@
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="power-button"/>
+                </style>
+
             </object>
             </child>
             <child>
@@ -89,6 +111,11 @@
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="power-button"/>
+                </style>
+
             </object>
             </child>
 
@@ -102,6 +129,11 @@
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="scale-label"/>
+                </style>
+
             </object>
             </child>
             <child> 
@@ -114,6 +146,11 @@
                     <property name="column-span">3</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="scale"/>
+                </style>
+
             </object>
             </child>
 
@@ -127,6 +164,11 @@
                     <property name="column-span">1</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="scale-label"/>
+                </style>
+
             </object>
             </child>
             <child> 
@@ -139,6 +181,11 @@
                     <property name="column-span">3</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="scale"/>
+                </style>
+
             </object>
             </child>
 
@@ -167,36 +214,51 @@
 
             <child>
             <object class="GtkButton" id="conservation-mode-button">
-                <property name="label">Conservation Mode</property>
+                <property name="label">Conservation</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">4</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="button"/>
+                </style>
+
             </object>
             </child>
             <child>
             <object class="GtkButton" id="power-mode-button">
-                <property name="label">Power Mode</property>
+                <property name="label">Power</property>
                 <layout>
                     <property name="column">2</property>
                     <property name="row">4</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="button"/>
+                </style>
+
             </object>
             </child>
 
             <child>
             <object class="GtkButton" id="boost-mode-button">
-                <property name="label">Boost Mode</property>
+                <property name="label">Boost</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">5</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="button"/>
+                </style>
+
             </object>
             </child>
 
