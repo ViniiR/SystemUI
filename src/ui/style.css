@@ -1,14 +1,25 @@
 :root {
   --prussian: #003153;
+
   --enabled: #003153;
   --enabled-foreground: white;
+  --enabled-hover: #003d67;
+
   --disabled: #4c4c4c;
   --disabled-foreground: grey;
+  --disabled-hover: white;
+
   --dark-white: #505050;
   --foreground: white;
 }
 
+* {
+  outline-width: 0px; 
+  outline: none;
+}
+
 /* . */
+
 .main-window {
   padding: 20px;
 }
@@ -23,12 +34,21 @@
   border-radius: 50px;
   background-color: var(--prussian);
   border: none;
+  padding: 10px;
+  font-weight: bold;
+}
+.battery-button:hover {
+  background-color: var(--enabled-hover);
 }
 
 .power-button {
   border-radius: 50px;
   background-color: var(--prussian);
   border: none;
+  padding: 10px;
+}
+.power-button:hover {
+  background-color: var(--enabled-hover);
 }
 
 /* . */
@@ -42,6 +62,13 @@
   background-color: var(--foreground);
 }
 .scale trough {
+}
+
+.scale:hover highlight {
+  /* background-color: var(--enabled-hover); */
+}
+.scale:hover slider {
+  background-color: var(--dark-white);
 }
 
 .scale-label {
@@ -59,8 +86,14 @@
   font-weight: bold;
   color: var(--enabled-foreground);
 }
+.button-active:hover {
+  background-color: var(--enabled-hover);
+}
 
 .button-inactive {
   background-color: var(--disabled);
   color: var(--disabled-foreground);
+}
+.button-inactive:hover {
+  background-color: var(--disabled-hover);
 }

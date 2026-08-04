@@ -38,84 +38,82 @@
             </style>
 
             <child>
-            <object class="GtkButton" id="battery-button">
+            <object class="GtkBox">
                 <layout>
                     <property name="column">0</property>
                     <property name="row">0</property>
-                    <property name="column-span">1</property>
+                    <property name="column-span">4</property>
                     <property name="row-span">1</property>
                 </layout>
 
+                <property name="orientation">horizontal</property>
+                <property name="spacing">6</property>
+
                 <style>
-                    <class name="battery-button"/>
+                    <class name="top-box"/>
                 </style>
 
                 <child>
-                <object class="GtkBox">
-                    <property name="spacing">6</property>
-                    <property name="halign">center</property>
-                    <property name="valign">center</property>
+                <object class="GtkButton" id="battery-button">
+                    <style>
+                        <class name="battery-button"/>
+                    </style>
 
                     <child>
-                    <object class="GtkLabel" id="battery-button-box-label">
-                        <property name="label">0%</property>
-                    </object>
-                    </child>
-                    <child>
-                    <object class="GtkImage" id="battery-button-box-image">
-                        <property name="icon-name">battery-level-0</property>
+                    <object class="GtkBox">
+                        <property name="spacing">6</property>
+                        <property name="halign">center</property>
+                        <property name="valign">center</property>
+
+                        <child>
+                        <object class="GtkLabel" id="battery-button-box-label">
+                            <property name="label">0%</property>
+                        </object>
+                        </child>
+                        <child>
+                        <object class="GtkImage" id="battery-button-box-image">
+                            <property name="icon-name">battery-level-0</property>
+                        </object>
+                        </child>
                     </object>
                     </child>
                 </object>
                 </child>
-            </object>
-            </child>
-            <child>
-            <object class="GtkButton" id="logout-button">
-                <property name="icon-name">system-log-out</property>
-                <layout>
-                    <property name="column">1</property>
-                    <property name="row">0</property>
-                    <property name="column-span">1</property>
-                    <property name="row-span">1</property>
-                </layout>
+                <child>
+                <object class="GtkBox">
+                    <property name="hexpand">true</property>
+                </object>
+                </child>
+                <child>
+                <object class="GtkButton" id="logout-button">
+                    <property name="icon-name">system-log-out</property>
 
-                <style>
-                    <class name="power-button"/>
-                </style>
+                    <style>
+                        <class name="power-button"/>
+                    </style>
 
-            </object>
-            </child>
-            <child>
-            <object class="GtkButton" id="reboot-button">
-                <property name="icon-name">system-reboot</property>
-                <layout>
-                    <property name="column">2</property>
-                    <property name="row">0</property>
-                    <property name="column-span">1</property>
-                    <property name="row-span">1</property>
-                </layout>
+                </object>
+                </child>
+                <child>
+                <object class="GtkButton" id="reboot-button">
+                    <property name="icon-name">system-reboot</property>
 
-                <style>
-                    <class name="power-button"/>
-                </style>
+                    <style>
+                        <class name="power-button"/>
+                    </style>
 
-            </object>
-            </child>
-            <child>
-            <object class="GtkButton" id="shutdown-button">
-                <property name="icon-name">system-shutdown</property>
-                <layout>
-                    <property name="column">3</property>
-                    <property name="row">0</property>
-                    <property name="column-span">1</property>
-                    <property name="row-span">1</property>
-                </layout>
+                </object>
+                </child>
+                <child>
+                <object class="GtkButton" id="shutdown-button">
+                    <property name="icon-name">system-shutdown</property>
 
-                <style>
-                    <class name="power-button"/>
-                </style>
+                    <style>
+                        <class name="power-button"/>
+                    </style>
 
+                </object>
+                </child>
             </object>
             </child>
 
