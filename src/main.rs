@@ -1,6 +1,6 @@
 use gtk::gdk::{self, Display};
 use gtk::glib::g_critical;
-use gtk::{gio, glib, Application, ApplicationWindow, EventControllerKey};
+use gtk::{gio, glib, Application, ApplicationWindow, EventControllerFocus, EventControllerKey};
 use gtk::{prelude::*, CssProvider};
 
 use crate::types::Program;
@@ -82,19 +82,32 @@ fn activate(app: &Application) {
         };
     });
 
-    let controller = EventControllerKey::new();
-    let window_c = window.clone();
-
-    controller.connect_key_pressed(move |_, val, _code, _state| {
-        if val == gdk::Key::Escape {
-            window_c.close();
-            glib::Propagation::Stop
-        } else {
-            glib::Propagation::Proceed
+    let key_controller = EventControllerKey::new();
+    key_controller.connect_key_pressed(glib::clone!(
+        #[strong]
+        window,
+        move |_, val, _code, _state| {
+            if val == gdk::Key::Escape {
+                // TODO: fix critical error on esc press
+                window.close();
+                glib::Propagation::Stop
+            } else {
+                glib::Propagation::Proceed
+            }
         }
-    });
+    ));
+    window.add_controller(key_controller);
 
-    window.add_controller(controller);
+    let focus_controller = EventControllerFocus::new();
+    focus_controller.connect_leave(glib::clone!(
+        #[strong]
+        window,
+        move |_| {
+            window.close();
+        }
+    ));
+    window.add_controller(focus_controller);
+
     window.set_application(Some(app));
 
     window.present();
