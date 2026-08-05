@@ -7,9 +7,9 @@
 
   --disabled: #4c4c4c;
   --disabled-foreground: grey;
-  --disabled-hover: white;
+  --disabled-hover: #606060;
 
-  --dark-white: #505050;
+  --dark-white: #a1a1a1;
   --foreground: white;
 }
 
@@ -25,7 +25,6 @@
 }
 
 .main-grid {
-  /* background-color: white; */
 }
 
 /* . */
@@ -62,6 +61,7 @@
   background-color: var(--foreground);
 }
 .scale trough {
+    background-color: var(--disabled);
 }
 
 .scale:hover highlight {
@@ -78,12 +78,12 @@
 
 .button {
   border-radius: 50px;
+  font-weight: bold;
   border: none;
 }
 
 .button-active {
   background-color: var(--enabled);
-  font-weight: bold;
   color: var(--enabled-foreground);
 }
 .button-active:hover {
@@ -92,7 +92,7 @@
 
 .button-inactive {
   background-color: var(--disabled);
-  color: var(--disabled-foreground);
+  color: var(--enabled-foreground);
 }
 .button-inactive:hover {
   background-color: var(--disabled-hover);
