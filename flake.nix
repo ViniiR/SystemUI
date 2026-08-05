@@ -33,7 +33,7 @@
                 runHook preInstall
 
                 mkdir -p $out/bin
-                mv system_ui $out/bin/${pname}
+                mv vgsc $out/bin/${pname}
 
                 runHook postInstall
             '';
