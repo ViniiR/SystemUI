@@ -1,6 +1,6 @@
-use gtk::gdk::Display;
+use gtk::gdk::{self, Display};
 use gtk::glib::g_critical;
-use gtk::{gio, glib, Application, ApplicationWindow};
+use gtk::{gio, glib, Application, ApplicationWindow, EventControllerKey};
 use gtk::{prelude::*, CssProvider};
 
 use crate::types::Program;
@@ -82,6 +82,19 @@ fn activate(app: &Application) {
         };
     });
 
+    let controller = EventControllerKey::new();
+    let window_c = window.clone();
+
+    controller.connect_key_pressed(move |_, val, _code, _state| {
+        if val == gdk::Key::Escape {
+            window_c.close();
+            glib::Propagation::Stop
+        } else {
+            glib::Propagation::Proceed
+        }
+    });
+
+    window.add_controller(controller);
     window.set_application(Some(app));
 
     window.present();
