@@ -63,6 +63,8 @@ ResultVoid write_file(const char *path, const char *content) {
     return res;
 }
 
+/// WARNING: if programs are not available in root's $PATH
+/// must add it flake.nix systemd.services.<...>.path
 ResultVoid exec_command(
     char *output,
     const unsigned int size,

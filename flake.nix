@@ -48,7 +48,7 @@
                 User=root
                 SystemdService=${pname}.service
                 END
-                
+
                 # D-Bus config file
                 mkdir -p $out/share/dbus-1/system.d
                 cp ${./dbus.conf.xml} $out/share/dbus-1/system.d/${interface_name}.conf
@@ -65,6 +65,15 @@
                 wantedBy = ["multi-user.target"];
                 after = ["dbus.service"];
                 wants = ["dbus.service"];
+                environment = {
+                    DISPLAY = ":0";
+                    XDG_RUNTIME_DIR = "/run/user/1000";
+                    DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/1000/bus";
+                };
+                path = with pkgs; [
+                    wireplumber
+                    gawk
+                ];
                 serviceConfig = {
                     Type = "dbus";
                     BusName = interface_name;
