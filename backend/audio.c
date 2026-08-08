@@ -24,8 +24,8 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
         "SetAudio",
         "u",
         SD_BUS_PARAM(percentage),
-        "",
-        "",
+        "ub",
+        SD_BUS_PARAM(percentage) SD_BUS_PARAM(is_muted),
         set_audio_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
@@ -114,7 +114,27 @@ int set_audio_handler(
         );
     }
 
-    return sd_bus_reply_method_return(p_msg, NULL);
+    //
+
+    ResultHeapStructPointer result_get_volume = get_pipewire_volume();
+    if (result_get_volume.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror,
+            SD_BUS_ERROR_FAILED,
+            "Failed to get volume, Error: %s",
+            result_get_volume.err_msg
+        );
+    }
+
+    VolumeStatus *volume_status = (VolumeStatus *)result_get_volume.ok_value;
+
+    int return_value = sd_bus_reply_method_return(
+        p_msg, "ub", volume_status->volume, volume_status->is_muted
+    );
+
+    free(result_get_volume.ok_value);
+
+    return return_value;
 }
 
 int toggle_audio_muted_handler(

@@ -7,46 +7,35 @@ use gtk::{
     Box, Builder, GestureClick, Image, Label, Scale,
 };
 
-use crate::types::{dbus, Program};
 use crate::{types::HandlerError, ui::get_volume_icon};
+use crate::{
+    types::{dbus, Program},
+    ui,
+};
 
-async fn update_volume(
-    conn: DBusConnection,
+fn update_volume(
+    variant: glib::Variant,
     label: Label,
     image: Image,
     scale: Scale,
-    signal: &SignalHandlerId,
+    signal: Option<&SignalHandlerId>,
 ) {
-    let res = conn
-        .call_future(
-            Some(Program::BACKEND_NAME),
-            dbus::Controllers::AUDIO,
-            &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
-            dbus::Methods::GET_AUDIO,
-            None,
-            Some(VariantTy::TUPLE),
-            DBusCallFlags::NONE,
-            dbus::Timeout::NONE,
-        )
-        .await;
-
-    if let Err(e) = &res {
-        g_warning!(None, "DBus call error: {e:?}");
-        return;
-    }
-    let res = res.unwrap();
-
-    let percentage = res.child_value(0).get::<u32>();
-    let is_muted = res.child_value(1).get::<bool>();
+    //if variant.n_children() == 0 {
+    //    return;
+    //}
+    let percentage = variant.child_value(0).get::<u32>();
+    let is_muted = variant.child_value(1).get::<bool>();
 
     match (percentage, is_muted) {
         (Some(percentage), Some(is_muted)) => {
             label.set_text(&format!("{}", percentage));
             image.set_icon_name(Some(&get_volume_icon(percentage, is_muted)));
 
-            scale.block_signal(signal);
-            scale.set_value(percentage as f64);
-            scale.unblock_signal(signal);
+            if let Some(signal) = signal {
+                scale.block_signal(signal);
+                scale.set_value(percentage as f64);
+                scale.unblock_signal(signal);
+            }
         }
         _ => {
             g_warning!(None, "GetAudio callback returned invalid tuple types");
@@ -79,29 +68,35 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
     let signal = scale.connect_value_changed(glib::clone!(
         #[weak]
         label,
+        #[weak]
+        label_image,
+        #[strong]
+        scale,
         #[strong]
         conn,
-        move |scale| {
+        move |_| {
             let value = scale.value() as u32;
 
-            label.set_text(&format!("{}", value));
-
-            let res = conn.call_future(
-                Some(Program::BACKEND_NAME),
-                dbus::Controllers::AUDIO,
-                &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
-                dbus::Methods::SET_AUDIO,
-                Some(&(value,).to_variant()),
-                None,
-                DBusCallFlags::NONE,
-                dbus::Timeout::NONE,
-            );
-
+            let conn = conn.clone();
+            let scale = scale.clone();
             glib::spawn_future_local(async move {
-                let res = res.await;
-
-                if let Err(e) = &res {
-                    g_warning!(None, "DBus call error: {e:?}");
+                let res = conn
+                    .call_future(
+                        Some(Program::BACKEND_NAME),
+                        dbus::Controllers::AUDIO,
+                        &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+                        dbus::Methods::SET_AUDIO,
+                        Some(&(value,).to_variant()),
+                        Some(VariantTy::TUPLE),
+                        DBusCallFlags::NONE,
+                        dbus::Timeout::NONE,
+                    )
+                    .await;
+                match res {
+                    Ok(v) => {
+                        update_volume(v, label, label_image, scale, None);
+                    }
+                    Err(e) => g_warning!(None, "DBus call error: {e:?}"),
                 }
             });
         }
@@ -121,7 +116,24 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
         #[strong]
         shared_id,
         async move {
-            update_volume(conn, label, label_image, scale, &shared_id).await;
+            let res = conn
+                .call_future(
+                    Some(Program::BACKEND_NAME),
+                    dbus::Controllers::AUDIO,
+                    &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+                    dbus::Methods::GET_AUDIO,
+                    None,
+                    Some(VariantTy::TUPLE),
+                    DBusCallFlags::NONE,
+                    dbus::Timeout::NONE,
+                )
+                .await;
+            match res {
+                Ok(v) => {
+                    update_volume(v, label, label_image, scale, Some(&shared_id));
+                }
+                Err(e) => g_warning!(None, "DBus call error: {e:?}"),
+            }
         }
     ));
 
@@ -143,8 +155,6 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
                 label_image,
                 #[strong]
                 conn,
-                #[strong]
-                shared_id,
                 async move {
                     let res = conn
                         .call_future(
@@ -158,12 +168,35 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
                             dbus::Timeout::NONE,
                         )
                         .await;
-                    if let Err(e) = &res {
-                        g_warning!(None, "DBus call error: {e:?}");
-                        return;
+                    match res {
+                        Ok(..) => {
+                            let get = conn
+                                .call_future(
+                                    Some(Program::BACKEND_NAME),
+                                    dbus::Controllers::AUDIO,
+                                    &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+                                    dbus::Methods::GET_AUDIO,
+                                    None,
+                                    Some(VariantTy::TUPLE),
+                                    DBusCallFlags::NONE,
+                                    dbus::Timeout::NONE,
+                                )
+                                .await;
+                            match get {
+                                Ok(v) => {
+                                    let is_muted = v.child_value(1).get::<bool>();
+                                    match is_muted {
+                                        Some(v) => {
+                                            label_image.set_icon_name(Some(&get_volume_icon(0, v)))
+                                        }
+                                        None => g_warning!(None, "DBus unknown call error"),
+                                    }
+                                }
+                                Err(e) => g_warning!(None, "DBus call error: {e:?}"),
+                            }
+                        }
+                        Err(e) => g_warning!(None, "DBus call error: {e:?}"),
                     }
-
-                    update_volume(conn, label, label_image, scale, &shared_id).await;
                 }
             ));
         }
