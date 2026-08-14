@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use gtk::{
     gio::{DBusCallFlags, DBusConnection},
@@ -7,41 +7,8 @@ use gtk::{
     Box, Builder, GestureClick, Image, Label, Scale,
 };
 
+use crate::types::{dbus, Program};
 use crate::{types::HandlerError, ui::get_volume_icon};
-use crate::{
-    types::{dbus, Program},
-    ui,
-};
-
-fn update_volume(
-    variant: glib::Variant,
-    label: Label,
-    image: Image,
-    scale: Scale,
-    signal: Option<&SignalHandlerId>,
-) {
-    //if variant.n_children() == 0 {
-    //    return;
-    //}
-    let percentage = variant.child_value(0).get::<u32>();
-    let is_muted = variant.child_value(1).get::<bool>();
-
-    match (percentage, is_muted) {
-        (Some(percentage), Some(is_muted)) => {
-            label.set_text(&format!("{}", percentage));
-            image.set_icon_name(Some(&get_volume_icon(percentage, is_muted)));
-
-            if let Some(signal) = signal {
-                scale.block_signal(signal);
-                scale.set_value(percentage as f64);
-                scale.unblock_signal(signal);
-            }
-        }
-        _ => {
-            g_warning!(None, "GetAudio callback returned invalid tuple types");
-        }
-    }
-}
 
 pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError<'_>> {
     let scale = builder
@@ -65,43 +32,60 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
                 "Failed to get volume-scale-label-image",
             ))?;
 
+    let state = Rc::new(RefCell::new(State::default()));
+
+    let pending_timer: Rc<RefCell<Option<glib::SourceId>>> = Rc::new(RefCell::new(None));
+    let last_sent_value = Rc::new(std::cell::Cell::new(u32::MAX));
+
     let signal = scale.connect_value_changed(glib::clone!(
         #[weak]
         label,
         #[weak]
         label_image,
         #[strong]
-        scale,
-        #[strong]
         conn,
-        move |_| {
+        #[strong]
+        state,
+        move |scale| {
             let value = scale.value() as u32;
 
-            let conn = conn.clone();
-            let scale = scale.clone();
-            glib::spawn_future_local(async move {
-                let res = conn
-                    .call_future(
-                        Some(Program::BACKEND_NAME),
-                        dbus::Controllers::AUDIO,
-                        &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
-                        dbus::Methods::SET_AUDIO,
-                        Some(&(value,).to_variant()),
-                        Some(VariantTy::TUPLE),
-                        DBusCallFlags::NONE,
-                        dbus::Timeout::NONE,
-                    )
-                    .await;
-                match res {
-                    Ok(v) => {
-                        update_volume(v, label, label_image, scale, None);
+            {
+                let mut s = state.borrow_mut();
+                s.set_volume(value);
+            }
+            update_volume(state.borrow(), label, label_image, scale.clone(), None);
+
+            if value == last_sent_value.get() {
+                return;
+            }
+            if let Some(source_id) = pending_timer.borrow_mut().take() {
+                source_id.remove();
+            }
+
+            let timer_clone = pending_timer.clone();
+            let last_sent_clone = last_sent_value.clone();
+
+            let source_id = glib::timeout_add_local_once(
+                std::time::Duration::from_millis(50),
+                glib::clone!(
+                    #[strong]
+                    conn,
+                    #[strong]
+                    state,
+                    move || {
+                        timer_clone.borrow_mut().take();
+                        last_sent_clone.set(value);
+
+                        glib::spawn_future_local(handle_scale_update_timeout(value, conn, state));
                     }
-                    Err(e) => g_warning!(None, "DBus call error: {e:?}"),
-                }
-            });
+                ),
+            );
+
+            *pending_timer.borrow_mut() = Some(source_id);
         }
     ));
-    let shared_id = Rc::new(signal);
+
+    let signal_rc = Rc::new(signal);
 
     // Get volume on startup
     glib::spawn_future_local(glib::clone!(
@@ -114,23 +98,25 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
         #[strong]
         label_image,
         #[strong]
-        shared_id,
+        signal_rc,
+        #[strong]
+        state,
         async move {
-            let res = conn
-                .call_future(
-                    Some(Program::BACKEND_NAME),
-                    dbus::Controllers::AUDIO,
-                    &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
-                    dbus::Methods::GET_AUDIO,
-                    None,
-                    Some(VariantTy::TUPLE),
-                    DBusCallFlags::NONE,
-                    dbus::Timeout::NONE,
-                )
-                .await;
-            match res {
+            let call = conn.call_future(
+                Some(Program::BACKEND_NAME),
+                dbus::Controllers::AUDIO,
+                &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+                dbus::Methods::GET_AUDIO,
+                None,
+                Some(VariantTy::TUPLE),
+                DBusCallFlags::NONE,
+                dbus::Timeout::NONE,
+            );
+            match call.await {
                 Ok(v) => {
-                    update_volume(v, label, label_image, scale, Some(&shared_id));
+                    let mut state = state.borrow_mut();
+                    state.update(v);
+                    update_volume(state, label, label_image, scale, Some(&signal_rc));
                 }
                 Err(e) => g_warning!(None, "DBus call error: {e:?}"),
             }
@@ -139,69 +125,150 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
 
     let click_controller = GestureClick::new();
     click_controller.connect_pressed(glib::clone!(
-        #[weak]
-        label,
-        #[weak]
-        scale,
         #[strong]
         conn,
         #[strong]
         label_image,
         #[strong]
-        shared_id,
+        label,
+        #[strong]
+        scale,
         move |_gesture, _n_press, _x, _y| {
-            glib::spawn_future_local(glib::clone!(
-                #[strong]
-                label_image,
-                #[strong]
-                conn,
-                async move {
-                    let res = conn
-                        .call_future(
-                            Some(Program::BACKEND_NAME),
-                            dbus::Controllers::AUDIO,
-                            &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
-                            dbus::Methods::TOGGLE_AUDIO_MUTED,
-                            None,
-                            None,
-                            DBusCallFlags::NONE,
-                            dbus::Timeout::NONE,
-                        )
-                        .await;
-                    match res {
-                        Ok(..) => {
-                            let get = conn
-                                .call_future(
-                                    Some(Program::BACKEND_NAME),
-                                    dbus::Controllers::AUDIO,
-                                    &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
-                                    dbus::Methods::GET_AUDIO,
-                                    None,
-                                    Some(VariantTy::TUPLE),
-                                    DBusCallFlags::NONE,
-                                    dbus::Timeout::NONE,
-                                )
-                                .await;
-                            match get {
-                                Ok(v) => {
-                                    let is_muted = v.child_value(1).get::<bool>();
-                                    match is_muted {
-                                        Some(v) => {
-                                            label_image.set_icon_name(Some(&get_volume_icon(0, v)))
-                                        }
-                                        None => g_warning!(None, "DBus unknown call error"),
-                                    }
-                                }
-                                Err(e) => g_warning!(None, "DBus call error: {e:?}"),
-                            }
-                        }
-                        Err(e) => g_warning!(None, "DBus call error: {e:?}"),
-                    }
-                }
-            ));
+            {
+                let mut state = state.borrow_mut();
+                state.toggle_muted();
+            }
+            update_volume(
+                state.borrow(),
+                label.clone(),
+                label_image.clone(),
+                scale.clone(),
+                None,
+            );
+            glib::spawn_future_local(handle_mute_click(conn.clone(), label_image.clone()));
         }
     ));
     label_box.add_controller(click_controller);
 
     Ok(())
+}
+
+#[derive(Default)]
+struct State {
+    pub volume: u32,
+    pub is_muted: bool,
+}
+impl State {
+    pub fn set_volume(&mut self, value: u32) {
+        self.volume = value;
+    }
+    pub fn set_muted(&mut self, value: bool) {
+        self.is_muted = value;
+    }
+
+    pub fn toggle_muted(&mut self) {
+        self.is_muted = !self.is_muted;
+    }
+
+    pub fn update(&mut self, variant: glib::Variant) {
+        let percentage = variant.child_value(0).get::<u32>();
+        let is_muted = variant.child_value(1).get::<bool>();
+
+        match (percentage, is_muted) {
+            (Some(percentage), Some(is_muted)) => {
+                self.set_volume(percentage);
+                self.set_muted(is_muted);
+            }
+            _ => {
+                g_warning!(None, "GetAudio callback returned invalid tuple types");
+            }
+        }
+    }
+}
+
+//
+
+fn update_volume<T>(
+    state: T,
+    label: Label,
+    image: Image,
+    scale: Scale,
+    signal: Option<&SignalHandlerId>,
+) where
+    T: Deref<Target = State>,
+{
+    label.set_text(&format!("{}", state.volume));
+    image.set_icon_name(Some(&get_volume_icon(state.volume, state.is_muted)));
+
+    if let Some(signal) = signal {
+        scale.block_signal(signal);
+        scale.set_value(state.volume.into());
+        scale.unblock_signal(signal);
+    }
+}
+
+async fn handle_scale_update_timeout(value: u32, conn: DBusConnection, state: Rc<RefCell<State>>) {
+    let res = conn
+        .call_future(
+            Some(Program::BACKEND_NAME),
+            dbus::Controllers::AUDIO,
+            &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+            dbus::Methods::SET_AUDIO,
+            Some(&(value,).to_variant()),
+            Some(VariantTy::TUPLE),
+            DBusCallFlags::NONE,
+            dbus::Timeout::NONE,
+        )
+        .await;
+    match res {
+        Ok(v) => {
+            let mut state = state.borrow_mut();
+            state.update(v);
+        }
+        Err(e) => g_warning!(None, "DBus call error: {e:?}"),
+    }
+}
+
+async fn handle_mute_click(conn: DBusConnection, image: Image) {
+    let res = conn
+        .call_future(
+            Some(Program::BACKEND_NAME),
+            dbus::Controllers::AUDIO,
+            &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+            dbus::Methods::TOGGLE_AUDIO_MUTED,
+            None,
+            None,
+            DBusCallFlags::NONE,
+            dbus::Timeout::NONE,
+        )
+        .await;
+    if let Err(e) = &res {
+        g_warning!(None, "DBus call error: {e:?}");
+        return;
+    }
+
+    let get = conn
+        .call_future(
+            Some(Program::BACKEND_NAME),
+            dbus::Controllers::AUDIO,
+            &dbus::Controllers::to_interface(dbus::Controllers::AUDIO),
+            dbus::Methods::GET_AUDIO,
+            None,
+            Some(VariantTy::TUPLE),
+            DBusCallFlags::NONE,
+            dbus::Timeout::NONE,
+        )
+        .await;
+    if let Err(e) = &get {
+        g_warning!(None, "DBus call error: {e:?}");
+        return;
+    }
+    let get = get.unwrap();
+
+    let volume = get.child_value(0).get::<u32>();
+    let is_muted = get.child_value(1).get::<bool>();
+    match (volume, is_muted) {
+        (Some(v), Some(m)) => image.set_icon_name(Some(&get_volume_icon(v, m))),
+        _ => g_warning!(None, "DBus unknown call error"),
+    }
 }
