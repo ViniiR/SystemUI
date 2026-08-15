@@ -53,7 +53,7 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
                 let mut s = state.borrow_mut();
                 s.set_volume(value);
             }
-            update_volume(state.borrow(), label, label_image, scale.clone(), None);
+            update_volume(state.borrow(), &label, &label_image, scale, None);
 
             if value == last_sent_value.get() {
                 return;
@@ -116,7 +116,7 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
                 Ok(v) => {
                     let mut state = state.borrow_mut();
                     state.update(v);
-                    update_volume(state, label, label_image, scale, Some(&signal_rc));
+                    update_volume(state, &label, &label_image, &scale, Some(&signal_rc));
                 }
                 Err(e) => g_warning!(None, "DBus call error: {e:?}"),
             }
@@ -138,13 +138,7 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
                 let mut state = state.borrow_mut();
                 state.toggle_muted();
             }
-            update_volume(
-                state.borrow(),
-                label.clone(),
-                label_image.clone(),
-                scale.clone(),
-                None,
-            );
+            update_volume(state.borrow(), &label, &label_image, &scale, None);
             glib::spawn_future_local(handle_mute_click(conn.clone(), label_image.clone()));
         }
     ));
@@ -180,9 +174,9 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
 
 fn update_volume<T>(
     state: T,
-    label: Label,
-    image: Image,
-    scale: Scale,
+    label: &Label,
+    image: &Image,
+    scale: &Scale,
     signal: Option<&SignalHandlerId>,
 ) where
     T: Deref<Target = State>,
