@@ -7,7 +7,7 @@ use gtk::{
     Box, Builder, GestureClick, Image, Label, Scale,
 };
 
-use crate::types::{dbus, Program};
+use crate::types::{dbus, Program, State};
 use crate::{types::HandlerError, ui::get_volume_icon};
 
 pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError<'_>> {
@@ -153,40 +153,30 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
     Ok(())
 }
 
-#[derive(Default)]
-struct State {
-    pub volume: u32,
-    pub is_muted: bool,
-}
-impl State {
-    pub fn set_volume(&mut self, value: u32) {
-        self.volume = value;
-    }
-    pub fn set_muted(&mut self, value: bool) {
-        self.is_muted = value;
-    }
-
-    pub fn toggle_muted(&mut self) {
-        self.is_muted = !self.is_muted;
-    }
-
-    pub fn update(&mut self, variant: glib::Variant) {
-        let percentage = variant.child_value(0).get::<u32>();
-        let is_muted = variant.child_value(1).get::<bool>();
-
-        match (percentage, is_muted) {
-            (Some(percentage), Some(is_muted)) => {
-                self.set_volume(percentage);
-                self.set_muted(is_muted);
-            }
-            _ => {
-                g_warning!(None, "GetAudio callback returned invalid tuple types");
-            }
-        }
-    }
-}
-
 //
+
+//macro_rules! update_volume {
+//    (
+//        $volume:expr,
+//        $label:ident,
+//        $image:ident,
+//        $scale:ident,
+//        $signal:ident
+//    ) => {{
+//        let vol: u32 = $volume;
+//        let lbl: Label = $label;
+//        let img: Image = $image;
+//        let scl: Scale = $scale;
+//        let sig: Scale = $scale;
+//
+//        lbl.set_text(&format!("{}", vol));
+//        //img.set_icon_name(Some(&get_volume_icon(vol, state.is_muted)));
+//
+//        scl.block_signal(sig);
+//        scl.set_value(vol.into());
+//        scl.unblock_signal(sig);
+//    }};
+//}
 
 fn update_volume<T>(
     state: T,
