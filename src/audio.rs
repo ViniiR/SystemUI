@@ -38,9 +38,9 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
     let last_sent_value = Rc::new(std::cell::Cell::new(u32::MAX));
 
     let signal = scale.connect_value_changed(glib::clone!(
-        #[weak]
+        #[strong]
         label,
-        #[weak]
+        #[strong]
         label_image,
         #[strong]
         conn,
@@ -89,9 +89,9 @@ pub fn handle_audio(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
 
     // Get volume on startup
     glib::spawn_future_local(glib::clone!(
-        #[weak]
+        #[strong]
         label,
-        #[weak]
+        #[strong]
         scale,
         #[strong]
         conn,

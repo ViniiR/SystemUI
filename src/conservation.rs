@@ -54,7 +54,7 @@ pub fn handle_conservation(
     glib::spawn_future_local(glib::clone!(
         #[strong]
         conn,
-        #[weak]
+        #[strong]
         conservation,
         async move {
             let res = conn

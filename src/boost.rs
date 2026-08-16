@@ -47,7 +47,7 @@ pub fn handle_boost(builder: &Builder, conn: DBusConnection) -> Result<(), Handl
     glib::spawn_future_local(glib::clone!(
         #[strong]
         conn,
-        #[weak]
+        #[strong]
         boost,
         async move {
             let res = conn
