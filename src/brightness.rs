@@ -4,11 +4,12 @@ use gtk::{
     gio::{DBusCallFlags, DBusConnection},
     glib::{self, g_warning, object::ObjectExt, variant::ToVariant, SignalHandlerId, VariantTy},
     prelude::RangeExt,
-    Builder, Label, Scale,
+    Builder, Image, Label, Scale,
 };
 
 use crate::types::HandlerError;
 use crate::types::{dbus, Program};
+use crate::ui::get_brightness_icon;
 
 pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), HandlerError<'_>> {
     let scale = builder
@@ -20,19 +21,26 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
             .ok_or(HandlerError::ObjectError(
                 "Failed to get brightness-scale-label",
             ))?;
+    let image = builder
+        .object::<Image>("brightness-scale-label-image")
+        .ok_or(HandlerError::ObjectError(
+            "Failed to get brightness-scale-label-image",
+        ))?;
 
     let pending_timer: Rc<RefCell<Option<glib::SourceId>>> = Rc::new(RefCell::new(None));
     let last_sent_value = Rc::new(std::cell::Cell::new(u32::MAX));
 
     let signal = scale.connect_value_changed(glib::clone!(
-        #[weak]
+        #[strong]
         label,
+        #[strong]
+        image,
         #[strong]
         conn,
         move |scale| {
             let value = scale.value() as u32;
 
-            update_brightness(value, label, None, None);
+            update_brightness(value, &label, &image, None, None);
 
             if value == last_sent_value.get() {
                 return;
@@ -81,9 +89,11 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
 
     // Get brightness on startup
     glib::spawn_future_local(glib::clone!(
-        #[weak]
+        #[strong]
         label,
-        #[weak]
+        #[strong]
+        image,
+        #[strong]
         scale,
         async move {
             let call = conn.call_future(
@@ -104,7 +114,7 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
                         return;
                     };
 
-                    update_brightness(p, label, Some(scale), Some(&signal));
+                    update_brightness(p, &label, &image, Some(&scale), Some(&signal));
                 }
                 Err(e) => {
                     g_warning!(None, "DBus call error: {e:?}");
@@ -118,11 +128,13 @@ pub fn handle_brightness(builder: &Builder, conn: DBusConnection) -> Result<(), 
 
 fn update_brightness(
     percentage: u32,
-    label: Label,
-    scale: Option<Scale>,
+    label: &Label,
+    image: &Image,
+    scale: Option<&Scale>,
     signal: Option<&SignalHandlerId>,
 ) {
     label.set_text(&format!("{}", percentage));
+    image.set_icon_name(Some(&get_brightness_icon(percentage)));
 
     if let (Some(s), Some(scl)) = (signal, scale) {
         scl.block_signal(s);

@@ -130,7 +130,7 @@
                 <property name="valign">center</property>
 
                 <child>
-                <object class="GtkImage">
+                <object class="GtkImage" id="brightness-scale-label-image">
                     <property name="icon-name">display-brightness-medium-symbolic</property>
                 </object>
                 </child>

@@ -19,3 +19,11 @@ pub fn get_volume_icon(percentage: u32, is_muted: bool) -> String {
         _ => String::from("audio-status-volume-high-symbolic"),
     }
 }
+
+pub fn get_brightness_icon(percentage: u32) -> String {
+    match percentage {
+        0..=40 => String::from("display-brightness-low-symbolic"),
+        41..=60 => String::from("display-brightness-medium-symbolic"),
+        _ => String::from("display-brightness-high-symbolic"),
+    }
+}
