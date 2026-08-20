@@ -85,7 +85,7 @@
                 </child>
                 <child>
                 <object class="GtkButton" id="logout-button">
-                    <property name="icon-name">system-log-out</property>
+                    <property name="icon-name">system-log-out-symbolic</property>
 
                     <style>
                         <class name="power-button"/>
@@ -95,7 +95,7 @@
                 </child>
                 <child>
                 <object class="GtkButton" id="reboot-button">
-                    <property name="icon-name">system-reboot</property>
+                    <property name="icon-name">system-reboot-symbolic</property>
 
                     <style>
                         <class name="power-button"/>
@@ -105,7 +105,7 @@
                 </child>
                 <child>
                 <object class="GtkButton" id="shutdown-button">
-                    <property name="icon-name">system-shutdown</property>
+                    <property name="icon-name">system-shutdown-symbolic</property>
 
                     <style>
                         <class name="power-button"/>

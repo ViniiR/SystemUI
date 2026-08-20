@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
     <gresource prefix="/com/vinii/vgsc/icons">
+        <!-- NOTE: may or may not need vgsc-icons/scalable... prefix on aliases -->
+        <file alias="scalable/status/system-shutdown-symbolic.svg">system-shutdown-symbolic.svg</file>
+        <file alias="scalable/status/system-reboot-symbolic.svg">system-reboot-symbolic.svg</file>
+        <file alias="scalable/status/system-log-out-symbolic.svg">system-log-out-symbolic.svg</file>
+
         <file alias="scalable/status/display-brightness-symbolic.svg">display-brightness-symbolic.svg</file>
-        <file alias="scalable/status/bluetooth-active-symbolic.svg">bluetooth-active-symbolic.svg</file>
+
         <file alias="scalable/status/bluetooth-disabled-symbolic.svg">bluetooth-disabled-symbolic.svg</file>
         <file alias="scalable/status/bluetooth-disconnected-symbolic.svg">bluetooth-disconnected-symbolic.svg</file>
-        <file alias="scalable/status/power-profile-performance-symbolic.svg">power-profile-performance-symbolic.svg</file>
+        <file alias="scalable/status/bluetooth-active-symbolic.svg">bluetooth-active-symbolic.svg</file>
+        
         <file alias="scalable/status/power-profile-power-saver-symbolic.svg">power-profile-power-saver-symbolic.svg</file>
-        <file alias="scalable/status/audio-volume-high-symbolic.svg">audio-volume-high-symbolic.svg</file>
+        <file alias="scalable/status/power-profile-performance-symbolic.svg">power-profile-performance-symbolic.svg</file>
+
         <file alias="scalable/status/audio-volume-low-symbolic.svg">audio-volume-low-symbolic.svg</file>
         <file alias="scalable/status/audio-volume-medium-symbolic.svg">audio-volume-medium-symbolic.svg</file>
+        <file alias="scalable/status/audio-volume-high-symbolic.svg">audio-volume-high-symbolic.svg</file>
         <file alias="scalable/status/audio-volume-muted-symbolic.svg">audio-volume-muted-symbolic.svg</file>
+
         <file alias="scalable/status/battery-level-0-charging-symbolic.svg">battery-level-0-charging-symbolic.svg</file>
         <file alias="scalable/status/battery-level-0-plugged-in-symbolic.svg">battery-level-0-plugged-in-symbolic.svg</file>
         <file alias="scalable/status/battery-level-0-symbolic.svg">battery-level-0-symbolic.svg</file>
