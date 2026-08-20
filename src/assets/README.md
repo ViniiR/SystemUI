@@ -1,0 +1,3 @@
+### Credits
+
+most icons are derived from the <a href="http://www.gnome.org">GNOME Project</a>

@@ -17,20 +17,28 @@ mod ui;
 fn main() -> glib::ExitCode {
     let app = Application::builder().application_id(Program::NAME).build();
 
-    app.connect_startup(|_| {
-        let provider = CssProvider::new();
-        provider.load_from_path("src/ui/style.css");
+    gio::resources_register_include!("compiled.gresource").expect("Failed to register resources.");
 
+    app.connect_startup(|_| {
         let Some(display) = Display::default() else {
             g_critical!(None, "Failed to get default display");
             return;
         };
 
+        let provider = CssProvider::new();
+        provider.load_from_path("src/ui/style.css");
         gtk::style_context_add_provider_for_display(
             &display,
             &provider,
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
+
+        let theme = gtk::IconTheme::for_display(&display);
+        let resource_path = format!("{}/icons", Program::PATH);
+        theme.add_resource_path(&resource_path);
+
+        let settings = gtk::Settings::for_display(&display);
+        settings.set_gtk_icon_theme_name(Some("vgsc-icons"));
     });
     app.connect_activate(activate);
 
