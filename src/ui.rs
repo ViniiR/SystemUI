@@ -21,7 +21,8 @@ pub fn get_volume_icon(percentage: u32, is_muted: bool) -> String {
     }
 
     match percentage {
-        0..=40 => String::from("audio-volume-low-symbolic"),
+        0 => String::from("audio-volume-zero-symbolic"),
+        1..=40 => String::from("audio-volume-low-symbolic"),
         41..=60 => String::from("audio-volume-medium-symbolic"),
         _ => String::from("audio-volume-high-symbolic"),
     }
