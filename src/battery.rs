@@ -15,7 +15,6 @@ pub fn handle_battery(builder: &Builder, conn: DBusConnection) -> Result<(), Han
         .ok_or(HandlerError::ObjectError("Failed to get battery image"))?;
 
     glib::spawn_future_local(async move {
-        // TODO:
         #[allow(clippy::never_loop)]
         loop {
             let res = conn
@@ -51,7 +50,6 @@ pub fn handle_battery(builder: &Builder, conn: DBusConnection) -> Result<(), Han
             }
 
             glib::timeout_future_seconds(1).await;
-            break;
         }
     });
 
