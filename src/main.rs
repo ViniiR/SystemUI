@@ -1,7 +1,8 @@
 use gtk::gdk::{self, Display};
-use gtk::glib::g_critical;
-use gtk::{gio, glib, Application, ApplicationWindow, EventControllerFocus, EventControllerKey};
+use gtk::gio;
+use gtk::glib::{self, g_critical};
 use gtk::{prelude::*, CssProvider};
+use gtk::{Application, ApplicationWindow, EventControllerFocus, EventControllerKey};
 
 use crate::types::Program;
 
@@ -53,6 +54,7 @@ fn activate(app: &Application) {
     };
 
     glib::spawn_future_local(async move {
+        // TODO: return here might be useless
         // NOTE: getting system bus
         let Ok(dbus_connection) = gio::bus_get_future(gio::BusType::System).await else {
             g_critical!(None, "Failed to connect with DBus");
@@ -96,8 +98,9 @@ fn activate(app: &Application) {
         window,
         move |_, val, _code, _state| {
             if val == gdk::Key::Escape {
-                // TODO: fix critical error on esc press
-                window.close();
+                // Leave focus, focus_controller handles closing
+                GtkWindowExt::set_focus(&window, None::<&gtk::Widget>);
+
                 glib::Propagation::Stop
             } else {
                 glib::Propagation::Proceed
