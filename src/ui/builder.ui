@@ -239,7 +239,6 @@
 
             <child>
             <object class="GtkButton" id="conservation-mode-button">
-                <property name="label">Conservation</property>
                 <layout>
                     <property name="column">0</property>
                     <property name="row">4</property>
@@ -251,6 +250,29 @@
                     <class name="button"/>
                 </style>
 
+                <child>
+                <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">10</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+
+                    <style>
+                        <class name="button-box"/>
+                    </style>
+
+                    <child>
+                    <object class="GtkImage" id="conservation-mode-button-image">
+                        <property name="icon-name">power-profile-power-saver-symbolic</property>
+                    </object>
+                    </child>
+                    <child>
+                    <object class="GtkLabel" id="conservation-mode-button-label">
+                        <property name="label">Conservation</property>
+                    </object>
+                    </child>
+                </object>
+                </child>
             </object>
             </child>
             <child>
@@ -284,6 +306,29 @@
                     <class name="button"/>
                 </style>
 
+                <child>
+                <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">10</property>
+                    <property name="halign">start</property>
+                    <property name="valign">center</property>
+
+                    <style>
+                        <class name="button-box"/>
+                    </style>
+
+                    <child>
+                    <object class="GtkImage" id="boost-mode-button-image">
+                        <property name="icon-name">power-profile-performance-symbolic</property>
+                    </object>
+                    </child>
+                    <child>
+                    <object class="GtkLabel" id="boost-mode-button-label">
+                        <property name="label">Boost</property>
+                    </object>
+                    </child>
+                </object>
+                </child>
             </object>
             </child>
 

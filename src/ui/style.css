@@ -97,3 +97,7 @@
 .button-inactive:hover {
   background-color: var(--disabled-hover);
 }
+
+.button-box {
+    padding: 0px 0px 0px 10px;
+}
