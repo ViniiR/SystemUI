@@ -1,6 +1,7 @@
 #include "conservation.h"
 #include "types.h"
 #include "util.h"
+#include <stdlib.h>
 #include <systemd/sd-bus.h>
 
 const char CONSERVATION_PATH[] = "/com/vinii/vgsc/Conservation";
@@ -103,6 +104,8 @@ static ResultBool get_is_conservation_active() {
     if (strcmp(result_file.ok_value, "1") == 0) {
         is_active = true;
     }
+
+    free(result_file.ok_value);
 
     res.variant = OK;
     res.err_msg = "";

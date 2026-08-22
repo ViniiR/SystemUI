@@ -47,6 +47,7 @@ int get_battery_handler(
     }
     ResultInt result_percent = get_battery_percentage();
     if (result_percent.variant == ERR) {
+        free(result_icon.ok_value);
         return sd_bus_error_setf(
             p_reterror,
             SD_BUS_ERROR_INVALID_ARGS,
@@ -96,6 +97,7 @@ static ResultHeapString get_battery_directory() {
         snprintf(start, sizeof(start), "%.3s", entry->d_name);
 
         if (strcmp(start, "BAT") == 0) {
+            closedir(dir);
             char *buf;
             int size = asprintf(&buf, "%s/%s", power_supply, entry->d_name);
             if (size == -1) {
@@ -109,6 +111,8 @@ static ResultHeapString get_battery_directory() {
             return res;
         }
     }
+
+    closedir(dir);
 
     res.err_msg = "Failed to read directory";
     return res;
@@ -145,6 +149,7 @@ static ResultInt get_battery_percentage() {
 
     ResultHeapString result_full = read_file(full_capacity);
     if (result_full.variant == ERR) {
+        free(result_directory.ok_value);
         res.err_msg = result_full.err_msg;
         return res;
     }
@@ -152,6 +157,8 @@ static ResultInt get_battery_percentage() {
 
     ResultHeapString result_now = read_file(now_capacity);
     if (result_now.variant == ERR) {
+        free(result_directory.ok_value);
+        free(result_full.ok_value);
         res.err_msg = result_now.err_msg;
         return res;
     }
@@ -187,6 +194,7 @@ static ResultInt get_charging_status() {
 
     ResultHeapString result = read_file(filepath);
     if (result.variant == ERR) {
+        free(result_dir.ok_value);
         res.err_msg = result.err_msg;
         return res;
     }
@@ -279,6 +287,7 @@ static ResultHeapString get_battery_icon() {
 
     ResultInt result_percentage = get_battery_percentage();
     if (result_percentage.variant == ERR) {
+        free(result_suffix.ok_value);
         res.err_msg = result_percentage.err_msg;
         return res;
     }
@@ -293,12 +302,11 @@ static ResultHeapString get_battery_icon() {
         battery_level_formatted,
         result_suffix.ok_value
     );
+    free(result_suffix.ok_value);
     if (size == -1) {
         res.err_msg = "Failed to alloc";
         return res;
     }
-
-    free(result_suffix.ok_value);
 
     res.variant = OK;
     res.ok_value = buf;

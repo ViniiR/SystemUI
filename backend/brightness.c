@@ -152,12 +152,15 @@ static ResultInt get_brightness() {
         ResultHeapString result_max_brightness =
             read_brightness_from(entry->d_name, MAX_BRIGHTNESS_PATH);
         if (result_max_brightness.variant == ERR) {
+            closedir(dir);
             res.err_msg = result_max_brightness.err_msg;
             return res;
         }
         ResultHeapString result_current_brightness =
             read_brightness_from(entry->d_name, CURRENT_BRIGHTNESS_PATH);
         if (result_current_brightness.variant == ERR) {
+            free(result_max_brightness.ok_value);
+            closedir(dir);
             res.err_msg = result_current_brightness.err_msg;
             return res;
         }
@@ -167,12 +170,14 @@ static ResultInt get_brightness() {
 
         free(result_max_brightness.ok_value);
         free(result_current_brightness.ok_value);
+        closedir(dir);
 
         res.variant = OK;
         res.ok_value = percent;
         res.err_msg = "";
         return res;
     }
+    closedir(dir);
 
     res.err_msg = "Failed to read backlight directory";
     return res;
@@ -191,6 +196,7 @@ static ResultVoid set_brightness(
 
     int calculated_value =
         ceil((float)percent * atoi(result_max.ok_value) / 100);
+    free(result_max.ok_value);
 
     char str[STRING_KB];
     snprintf(str, sizeof(str), "%i", calculated_value);
@@ -200,8 +206,6 @@ static ResultVoid set_brightness(
         res.err_msg = result.err_msg;
         return res;
     }
-
-    free(result_max.ok_value);
 
     res.variant = OK;
     res.err_msg = "";
@@ -245,6 +249,7 @@ static ResultVoid set_brightness_all(const unsigned int percent) {
 
         ResultVoid result = set_brightness(percent, filepath, max_filepath);
         if (result.variant == ERR) {
+            closedir(dir);
             res.err_msg = result.err_msg;
             return res;
         }
