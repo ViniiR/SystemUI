@@ -9,6 +9,9 @@
   --disabled-foreground: grey;
   --disabled-hover: #606060;
 
+  --unused: #202020;
+  --unused-text: #404040;
+
   --dark-white: #a1a1a1;
   --foreground: white;
 }
@@ -100,4 +103,9 @@
 
 .button-box {
     padding: 0px 0px 0px 10px;
+}
+
+.unused {
+    background-color: var(--unused);
+    color: var(--unused-text);
 }
