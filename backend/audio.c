@@ -1,10 +1,18 @@
 #include "audio.h"
+#include "audio_individual.h"
 #include "types.h"
 #include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <systemd/sd-bus.h>
+
+static const char list_streams_command[] =
+    "pw-dump | jq -r '.[] | select(.type == \"PipeWire:Interface:Node\" and "
+    "(.info.props[\"media.class\"] | strings | startswith(\"Stream/\") and "
+    "contains(\"Audio\"))) | .id'";
+
+static const char inspect_format[] = "wpctl inspect %i | grep \"media.name\"";
 
 const char AUDIO_PATH[] = "/com/vinii/vgsc/Audio";
 const char AUDIO_INTERFACE[] = "com.vinii.vgsc.Audio";
@@ -38,10 +46,38 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
         toggle_audio_muted_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
+    SD_BUS_METHOD_WITH_NAMES(
+        "GetAudioIndividual",
+        "",
+        "",
+        "",
+        "",
+        get_audio_handler_individual,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
+    SD_BUS_METHOD_WITH_NAMES(
+        "SetAudioIndividual",
+        "uu",
+        SD_BUS_PARAM(percentage) SD_BUS_PARAM(sink_id),
+        "",
+        "",
+        set_audio_handler_individual,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
+    SD_BUS_METHOD_WITH_NAMES(
+        "ToggleAudioMutedIndividual",
+        "u",
+        SD_BUS_PARAM(sink_id),
+        "",
+        "",
+        toggle_audio_muted_handler_individual,
+        SD_BUS_VTABLE_UNPRIVILEGED
+    ),
     SD_BUS_VTABLE_END
 };
 
 static const unsigned int UID = 1000;
+static const char DEFAULT_SINK[] = "@DEFAULT_SINK@";
 
 typedef struct {
     bool is_muted;
@@ -50,17 +86,98 @@ typedef struct {
 
 //
 
-static ResultHeapStructPointer get_pipewire_volume();
-static ResultVoid set_pipewire_volume(unsigned int percentage);
+static ResultHeapStructPointer get_pipewire_volume(const char *sink);
+static ResultVoid set_pipewire_volume(
+    unsigned int percentage, const char *sink
+);
 static ResultBool get_is_pipewire_muted();
-static ResultVoid toggle_pipewire_muted();
+static ResultVoid toggle_pipewire_muted(const char *sink);
+
+//
+
+static int get_audio_handler_sink(
+    sd_bus_message *p_msg,
+    void *p_userdata,
+    sd_bus_error *p_reterror,
+    const char *sink_id
+);
+static int set_audio_handler_sink(
+    sd_bus_message *p_msg,
+    void *p_userdata,
+    sd_bus_error *p_reterror,
+    const char *sink_id
+);
+static int toggle_audio_muted_handler_sink(
+    sd_bus_message *p_msg,
+    void *p_userdata,
+    sd_bus_error *p_reterror,
+    const char *sink_id
+);
 
 //
 
 int get_audio_handler(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    ResultHeapStructPointer result_volume = get_pipewire_volume();
+    return get_audio_handler_sink(p_msg, p_userdata, p_reterror, DEFAULT_SINK);
+}
+int set_audio_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    return set_audio_handler_sink(p_msg, p_userdata, p_reterror, DEFAULT_SINK);
+}
+int toggle_audio_muted_handler(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    return toggle_audio_muted_handler_sink(
+        p_msg, p_userdata, p_reterror, DEFAULT_SINK
+    );
+}
+
+//
+
+int get_audio_handler_individual(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    // TODO: return array here
+    // uint32_t value;
+    //
+    // int res = sd_bus_message_read(p_msg, "u", &value);
+    // if (res < 0) {
+    //     return sd_bus_error_setf(
+    //         p_reterror,
+    //         SD_BUS_ERROR_INVALID_ARGS,
+    //         "Expected uint32_t sink id"
+    //     );
+    // }
+
+    // return get_audio_handler_sink(p_msg, p_userdata, p_reterror,
+    // DEFAULT_SINK);
+    get_all_streams();
+    return sd_bus_reply_method_return(p_msg, "", NULL);
+}
+int set_audio_handler_individual(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    return set_audio_handler_sink(p_msg, p_userdata, p_reterror, DEFAULT_SINK);
+}
+int toggle_audio_muted_handler_individual(
+    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+) {
+    return toggle_audio_muted_handler_sink(
+        p_msg, p_userdata, p_reterror, DEFAULT_SINK
+    );
+}
+
+//
+
+static int get_audio_handler_sink(
+    sd_bus_message *p_msg,
+    void *p_userdata,
+    sd_bus_error *p_reterror,
+    const char *sink_id
+) {
+    ResultHeapStructPointer result_volume = get_pipewire_volume(sink_id);
     if (result_volume.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
@@ -81,8 +198,11 @@ int get_audio_handler(
     return return_value;
 }
 
-int set_audio_handler(
-    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+static int set_audio_handler_sink(
+    sd_bus_message *p_msg,
+    void *p_userdata,
+    sd_bus_error *p_reterror,
+    const char *sink_id
 ) {
     uint32_t value;
     int res;
@@ -104,7 +224,7 @@ int set_audio_handler(
         );
     }
 
-    ResultVoid result_volume = set_pipewire_volume(value);
+    ResultVoid result_volume = set_pipewire_volume(value, sink_id);
     if (result_volume.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
@@ -116,7 +236,7 @@ int set_audio_handler(
 
     //
 
-    ResultHeapStructPointer result_get_volume = get_pipewire_volume();
+    ResultHeapStructPointer result_get_volume = get_pipewire_volume(sink_id);
     if (result_get_volume.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
@@ -137,10 +257,13 @@ int set_audio_handler(
     return return_value;
 }
 
-int toggle_audio_muted_handler(
-    sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
+static int toggle_audio_muted_handler_sink(
+    sd_bus_message *p_msg,
+    void *p_userdata,
+    sd_bus_error *p_reterror,
+    const char *sink_id
 ) {
-    ResultVoid result_muted = toggle_pipewire_muted();
+    ResultVoid result_muted = toggle_pipewire_muted(sink_id);
     if (result_muted.variant == ERR) {
         return sd_bus_error_setf(
             p_reterror,
@@ -159,13 +282,13 @@ int toggle_audio_muted_handler(
 // 1000 it's not ideal and likely a temporary solution, as far as temporary
 // solutions last
 
-static ResultHeapStructPointer get_pipewire_volume() {
+static ResultHeapStructPointer get_pipewire_volume(const char *sink_id) {
     ResultHeapStructPointer res = {
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = NULL
     };
 
     char command[STRING_KB];
-    snprintf(command, sizeof(command), "wpctl get-volume @DEFAULT_SINK@");
+    snprintf(command, sizeof(command), "wpctl get-volume %s", sink_id);
 
     char exec_output[STRING_KB];
     ResultVoid result_exec = exec_command_as_user(
@@ -217,15 +340,14 @@ static ResultHeapStructPointer get_pipewire_volume() {
     return res;
 }
 
-static ResultVoid set_pipewire_volume(unsigned int percentage) {
+static ResultVoid set_pipewire_volume(
+    unsigned int percentage, const char *sink
+) {
     ResultVoid res = RESULT_VOID_DEFAULT;
 
     char command[STRING_KB];
     snprintf(
-        command,
-        sizeof(command),
-        "wpctl set-volume @DEFAULT_SINK@ %i%%",
-        percentage
+        command, sizeof(command), "wpctl set-volume %s %i%%", sink, percentage
     );
 
     ResultVoid result_exec = exec_command_as_user(NULL, 0, command, "r", UID);
@@ -239,11 +361,11 @@ static ResultVoid set_pipewire_volume(unsigned int percentage) {
     return res;
 }
 
-static ResultVoid toggle_pipewire_muted() {
+static ResultVoid toggle_pipewire_muted(const char *sink) {
     ResultVoid res = RESULT_VOID_DEFAULT;
 
     char command[STRING_KB];
-    snprintf(command, sizeof(command), "wpctl set-mute @DEFAULT_SINK@ toggle");
+    snprintf(command, sizeof(command), "wpctl set-mute %s toggle", sink);
 
     ResultVoid result_exec = exec_command_as_user(NULL, 0, command, "r", UID);
     if (result_exec.variant == ERR) {
