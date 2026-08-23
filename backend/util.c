@@ -162,13 +162,13 @@ ResultVoid exec_command_as_user(
             int exit_code = WEXITSTATUS(status);
             if (exit_code != 0) {
                 res.err_msg = "Child process exited with failure code";
-                printf("Terminated by code: %i\n", exit_code);
+                fprintf(stderr, "Terminated by code: %i\n", exit_code);
                 return res;
             }
         } else if (WIFSIGNALED(status)) {
             int sig = WTERMSIG(status);
             res.err_msg = "Child process terminated by signal";
-            printf("Terminated by signal: %i\n", sig);
+            fprintf(stderr,"Terminated by signal: %i\n", sig);
             return res;
         } else {
             res.err_msg = "Process failed or exited abnormally";

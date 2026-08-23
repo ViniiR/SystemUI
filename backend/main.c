@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 }
 
 static int fail_with_message(const char message[], sd_bus *p, const int code) {
-    printf("D-Bus Error: %s %s\n", message, strerror(-code));
+    fprintf(stderr,"D-Bus Error: %s %s\n", message, strerror(-code));
 
     sd_bus_unref(p);
     return code;
