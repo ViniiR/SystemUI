@@ -1,18 +1,12 @@
 #include "audio.h"
 #include "audio_individual.h"
+#include "audio_internal.h"
 #include "types.h"
 #include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <systemd/sd-bus.h>
-
-static const char list_streams_command[] =
-    "pw-dump | jq -r '.[] | select(.type == \"PipeWire:Interface:Node\" and "
-    "(.info.props[\"media.class\"] | strings | startswith(\"Stream/\") and "
-    "contains(\"Audio\"))) | .id'";
-
-static const char inspect_format[] = "wpctl inspect %i | grep \"media.name\"";
 
 const char AUDIO_PATH[] = "/com/vinii/vgsc/Audio";
 const char AUDIO_INTERFACE[] = "com.vinii.vgsc.Audio";
@@ -78,11 +72,6 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
 
 static const unsigned int UID = 1000;
 static const char DEFAULT_SINK[] = "@DEFAULT_SINK@";
-
-typedef struct {
-    bool is_muted;
-    int volume;
-} VolumeStatus;
 
 //
 
@@ -281,6 +270,11 @@ static int toggle_audio_muted_handler_sink(
 // NOTE: this is the hackiest module in the application, running command as user
 // 1000 it's not ideal and likely a temporary solution, as far as temporary
 // solutions last
+
+
+ResultHeapStructPointer external_get_pipewire_volume(const char *sink_id) {
+    return get_pipewire_volume(sink_id);
+}
 
 static ResultHeapStructPointer get_pipewire_volume(const char *sink_id) {
     ResultHeapStructPointer res = {
