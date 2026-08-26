@@ -87,18 +87,29 @@ ResultVoid exec_command(
         return res;
     }
 
-    // ignore
-    if (output != NULL && fgets(output, size, fp) == NULL) {
-        pclose(fp);
-        snprintf(
-            error_message,
-            sizeof(error_message),
-            "Could not read file, Command: '%s'",
-            command
-        );
-        res.err_msg = error_message;
-        return res;
+    //
+    char full_output[size];
+
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read_bytes;
+
+    while ((read_bytes = getline(&line, &len, fp)) != -1) {
+        if (read_bytes == 0 && output != NULL) {
+            pclose(fp);
+            snprintf(
+                error_message,
+                sizeof(error_message),
+                "Could not read file, Command: '%s'",
+                command
+            );
+            res.err_msg = error_message;
+            return res;
+        }
+        strcat(full_output, line);
     }
+
+    snprintf(output, size, "%s", full_output);
 
     pclose(fp);
 
@@ -128,7 +139,8 @@ ResultVoid exec_command_as_user(
         return res;
     }
 
-    // TODO: this is the only part of the application that doesn't propagate errors up.
+    // TODO: this is the only part of the application that doesn't propagate
+    // errors up.
     // Run as child process
     if (pid == 0) {
         close(pipefd[0]);
@@ -168,7 +180,7 @@ ResultVoid exec_command_as_user(
         } else if (WIFSIGNALED(status)) {
             int sig = WTERMSIG(status);
             res.err_msg = "Child process terminated by signal";
-            fprintf(stderr,"Terminated by signal: %i\n", sig);
+            fprintf(stderr, "Terminated by signal: %i\n", sig);
             return res;
         } else {
             res.err_msg = "Process failed or exited abnormally";
