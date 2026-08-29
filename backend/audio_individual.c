@@ -1,45 +1,41 @@
 #include "audio_internal.h"
 #include "types.h"
 #include "util.h"
-#include <fcntl.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <systemd/sd-bus-protocol.h>
 
-static const char jq_format[] =
+static const char get_ids_command[] =
     "pw-dump | jq -r '.[] | select(.type == \"PipeWire:Interface:Node\" and "
     "(.info.props[\"media.class\"] | strings | startswith(\"Stream/\") and "
-    "contains(\"Audio\"))) | %s '";
+    "contains(\"Audio\"))) | .id '";
 
-
-static const char inspect_format[] = "wpctl inspect %i | grep \"media.name\"";
-
-ResultHeapStructPointer get_stream(unsigned int id) ;
+ResultHeapStructPointer get_stream(unsigned int id);
 
 static const unsigned int UID = 1000;
 
-ResultVoid get_all_streams(AudioStream *stream_array) {
+/// stream_array is an array of allocated structs(must free individually)
+/// array_size is a pointer to keep track of array_stream's size
+ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
     ResultVoid res = RESULT_VOID_DEFAULT;
 
-    char command[STRING_KB];
-    snprintf(command, sizeof(command), jq_format, ".id");
-
     char output_id[STRING_KB];
-    ResultVoid result_ids =
-        exec_command_as_user(output_id, sizeof(output_id), command, "r", UID);
+    ResultVoid result_ids = exec_command_as_user(
+        output_id, sizeof(output_id), get_ids_command, "r", UID
+    );
     if (result_ids.variant == ERR) {
         res.err_msg = result_ids.err_msg;
         return res;
     }
 
-    FILE *f = fmemopen((void *)output_id, strlen(output_id), "r");
+    FILE *f = fmemopen(output_id, strlen(output_id), "r");
     if (f == NULL) {
         res.err_msg = "fmemopen failed";
         return res;
     }
+
+    //
 
     char *line = NULL;
     size_t len = 0;
@@ -49,16 +45,19 @@ ResultVoid get_all_streams(AudioStream *stream_array) {
         line[strcspn(line, "\r\n")] = 0;
 
         ResultHeapStructPointer result = get_stream(atoi(line));
-        if (result.variant==ERR) {
-            res.err_msg=result.err_msg;
+        if (result.variant == ERR) {
+            free(line);
+            res.err_msg = result.err_msg;
+            return res;
         }
         AudioStream *stream = result.ok_value;
-        printf("Vol: %i, Muted: %i, Name: %s", stream->volume, stream->is_muted, stream->name);
 
-        free(result.ok_value);
+        stream_array[*array_size] = stream;
+        (*array_size)++;
+
+        free(line);
     }
 
-    free(line);
     fclose(f);
 
     res.variant = OK;
@@ -73,6 +72,8 @@ ResultHeapStructPointer get_stream(unsigned int id) {
 
     char id_char[STRING_KB];
     snprintf(id_char, sizeof(id_char), "%i", id);
+
+    //
 
     char name_command[STRING_KB];
     snprintf(
@@ -102,13 +103,14 @@ ResultHeapStructPointer get_stream(unsigned int id) {
     VolumeStatus *status = result_volume.ok_value;
 
     AudioStream *audio = malloc(sizeof(AudioStream));
-    audio->volume = status->volume, audio->is_muted = status->is_muted,
-    audio->name = output_name,
+    audio->name = output_name; // TODO: trim name of blanks and newlines
+    audio->volume = status->volume;
+    audio->is_muted = status->is_muted;
 
     free(result_volume.ok_value);
 
     res.variant = OK;
     res.err_msg = "";
-    res.ok_value = audio; // TODO:
+    res.ok_value = audio;
     return res;
 }

@@ -3,9 +3,7 @@
 #include "audio_internal.h"
 #include "types.h"
 #include "util.h"
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <systemd/sd-bus.h>
 
 const char AUDIO_PATH[] = "/com/vinii/vgsc/Audio";
@@ -41,12 +39,12 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
     SD_BUS_METHOD_WITH_NAMES(
-        "GetAudioIndividual",
+        "GetAllAudioIndividual",
         "",
         "",
-        "",
-        "",
-        get_audio_handler_individual,
+        "a(sub)",
+        SD_BUS_PARAM(array),
+        get_all_audio_handler_individual,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
     SD_BUS_METHOD_WITH_NAMES(
@@ -125,25 +123,51 @@ int toggle_audio_muted_handler(
 
 //
 
-int get_audio_handler_individual(
+int get_all_audio_handler_individual(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
 ) {
-    // TODO: return array here
-    // uint32_t value;
-    //
-    // int res = sd_bus_message_read(p_msg, "u", &value);
-    // if (res < 0) {
-    //     return sd_bus_error_setf(
-    //         p_reterror,
-    //         SD_BUS_ERROR_INVALID_ARGS,
-    //         "Expected uint32_t sink id"
-    //     );
-    // }
+    // Realistically it will never be bigger than 5 elements
+    static const size_t MAX_SIZE = 20;
 
-    // return get_audio_handler_sink(p_msg, p_userdata, p_reterror,
-    // DEFAULT_SINK);
-    get_all_streams();
-    return sd_bus_reply_method_return(p_msg, "", NULL);
+    AudioStream *array[MAX_SIZE];
+    size_t size = 0;
+    ResultVoid result_streams = get_all_streams(array, &size);
+    if (result_streams.variant == ERR) {
+        return sd_bus_error_setf(
+            p_reterror, SD_BUS_ERROR_FAILED, "%s", result_streams.err_msg
+        );
+    }
+    if (size > MAX_SIZE) {
+        size = MAX_SIZE;
+    }
+
+    //
+
+    sd_bus_message *p_reply_msg = NULL;
+    sd_bus_message_new_method_return(p_msg, &p_reply_msg);
+
+    sd_bus_message_open_container(p_reply_msg, SD_BUS_TYPE_ARRAY, "(sub)");
+    for (size_t i = 0; i < size; i++) {
+        sd_bus_message_open_container(p_reply_msg, SD_BUS_TYPE_STRUCT, "sub");
+
+        sd_bus_message_append(p_reply_msg, "s", array[i]->name);
+        sd_bus_message_append(p_reply_msg, "u", array[i]->volume);
+        sd_bus_message_append(p_reply_msg, "b", array[i]->is_muted);
+
+        sd_bus_message_close_container(p_reply_msg);
+    }
+    sd_bus_message_close_container(p_reply_msg);
+
+    int return_value = sd_bus_send(NULL, p_reply_msg, NULL);
+
+    //
+
+    for (size_t i = 0; i < size; i++) {
+        free(array[i]);
+    }
+    sd_bus_message_unref(p_reply_msg);
+
+    return return_value;
 }
 int set_audio_handler_individual(
     sd_bus_message *p_msg, void *p_userdata, sd_bus_error *p_reterror
@@ -270,7 +294,6 @@ static int toggle_audio_muted_handler_sink(
 // NOTE: this is the hackiest module in the application, running command as user
 // 1000 it's not ideal and likely a temporary solution, as far as temporary
 // solutions last
-
 
 ResultHeapStructPointer external_get_pipewire_volume(const char *sink_id) {
     return get_pipewire_volume(sink_id);
