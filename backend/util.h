@@ -3,6 +3,8 @@
 #include "types.h"
 #include <sys/types.h>
 
+void trim_newlines(char *str);
+
 ResultHeapString read_file(const char *path);
 
 ResultVoid write_file(const char *path, const char *content);

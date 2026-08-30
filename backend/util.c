@@ -8,6 +8,10 @@
 #include <string.h>
 #include <threads.h>
 
+void trim_newlines(char *str){
+    str[strcspn(str, "\r\n")] = 0;
+}
+
 ResultHeapString read_file(const char *path) {
     ResultHeapString res = {
         .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = ""
@@ -29,9 +33,7 @@ ResultHeapString read_file(const char *path) {
         res.err_msg = "Failed to read file content";
         return res;
     }
-
-    // Remove trailing newlines
-    buffer[strcspn(buffer, "\r\n")] = 0;
+    trim_newlines(buffer);
 
     res.variant = OK;
     res.ok_value = buffer;
