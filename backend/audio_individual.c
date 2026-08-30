@@ -42,7 +42,7 @@ ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
     ssize_t read_bytes;
 
     while ((read_bytes = getline(&line, &len, f)) != -1) {
-        line[strcspn(line, "\r\n")] = 0;
+        trim_newlines(line);
 
         ResultHeapStructPointer result = get_stream(atoi(line));
         if (result.variant == ERR) {
@@ -79,8 +79,8 @@ ResultHeapStructPointer get_stream(unsigned int id) {
     snprintf(
         name_command,
         sizeof(name_command),
-        "wpctl inspect %i | grep media.name | sed "
-        "'s/media.name.*\"\\(.*\\)\"/\\1/'",
+        "wpctl inspect %i | grep media.name | sed -E "
+        "'s/\\s*media\\.name.*\"(.*)\"/\\1/'",
         id
     );
     char output_name[STRING_KB];
@@ -91,6 +91,7 @@ ResultHeapStructPointer get_stream(unsigned int id) {
         res.err_msg = result_name.err_msg;
         return res;
     }
+    trim_newlines(output_name);
 
     //
 
