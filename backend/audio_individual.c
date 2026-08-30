@@ -47,6 +47,7 @@ ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
         ResultHeapStructPointer result = get_stream(atoi(line));
         if (result.variant == ERR) {
             free(line);
+            fclose(f);
             res.err_msg = result.err_msg;
             return res;
         }
@@ -54,10 +55,9 @@ ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
 
         stream_array[*array_size] = stream;
         (*array_size)++;
-
-        free(line);
     }
 
+    free(line);
     fclose(f);
 
     res.variant = OK;
@@ -104,7 +104,7 @@ ResultHeapStructPointer get_stream(unsigned int id) {
     VolumeStatus *status = result_volume.ok_value;
 
     AudioStream *audio = malloc(sizeof(AudioStream));
-    audio->name = output_name; // TODO: trim name of blanks and newlines
+    audio->name = strdup(output_name);
     audio->volume = status->volume;
     audio->is_muted = status->is_muted;
 

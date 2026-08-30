@@ -163,6 +163,7 @@ int get_all_audio_handler_individual(
     //
 
     for (size_t i = 0; i < size; i++) {
+        free(array[i]->name);
         free(array[i]);
     }
     sd_bus_message_unref(p_reply_msg);
