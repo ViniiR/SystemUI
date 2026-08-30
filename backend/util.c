@@ -8,6 +8,7 @@
 #include <string.h>
 #include <threads.h>
 
+/// Remove all newlines '\r' '\n' from str
 void trim_newlines(char *str){
     str[strcspn(str, "\r\n")] = 0;
 }
