@@ -80,7 +80,7 @@ ResultHeapStructPointer get_stream(unsigned int id) {
         name_command,
         sizeof(name_command),
         "wpctl inspect %i | grep media.name | sed -E "
-        "'s/\\s*media\\.name.*\"(.*)\"/\\1/'",
+        "'s/\\s*media\\.name\\s=\\s\"(.*)\"$/\\1/'",
         id
     );
     char output_name[STRING_KB];
