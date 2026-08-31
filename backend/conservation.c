@@ -12,21 +12,17 @@ const char CONSERVATION_INTERFACE[] = "com.vinii.vgsc.Conservation";
 
 const sd_bus_vtable CONSERVATION_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "ToggleConservation",
-        "",
-        "",
-        "b",
-        SD_BUS_PARAM(is_active),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("b", is_active),
         toggle_conservation_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "GetConservation",
-        "",
-        "",
-        "b",
-        SD_BUS_PARAM(is_active),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("b", is_active),
         get_conservation_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),

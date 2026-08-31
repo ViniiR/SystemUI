@@ -11,57 +11,45 @@ const char AUDIO_INTERFACE[] = "com.vinii.vgsc.Audio";
 
 const sd_bus_vtable AUDIO_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "GetAudio",
-        "",
-        "",
-        "ub",
-        SD_BUS_PARAM(percentage) SD_BUS_PARAM(is_muted),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("u", percentage, "b", is_muted),
         get_audio_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "SetAudio",
-        "u",
-        SD_BUS_PARAM(percentage),
-        "ub",
-        SD_BUS_PARAM(percentage) SD_BUS_PARAM(is_muted),
+        SD_BUS_ARGS("u", percentage),
+        SD_BUS_RESULT("u", percentage, "b", is_muted),
         set_audio_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "ToggleAudioMuted",
-        "",
-        "",
-        "",
-        "",
+        SD_BUS_NO_ARGS,
+        SD_BUS_NO_RESULT,
         toggle_audio_muted_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "GetAllAudioIndividual",
-        "",
-        "",
-        "a(sub)",
-        SD_BUS_PARAM(array),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("a(sub)", stream_array),
         get_all_audio_handler_individual,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "SetAudioIndividual",
-        "uu",
-        SD_BUS_PARAM(percentage) SD_BUS_PARAM(sink_id),
-        "",
-        "",
+        SD_BUS_ARGS("u", percentage, "u", sink_id),
+        SD_BUS_NO_RESULT,
         set_audio_handler_individual,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "ToggleAudioMutedIndividual",
-        "u",
-        SD_BUS_PARAM(sink_id),
-        "",
-        "",
+        SD_BUS_ARGS("u", sink_id),
+        SD_BUS_NO_RESULT,
         toggle_audio_muted_handler_individual,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),

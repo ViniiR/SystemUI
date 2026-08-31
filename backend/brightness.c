@@ -12,21 +12,17 @@ const char BRIGHTNESS_INTERFACE[] = "com.vinii.vgsc.Brightness";
 
 const sd_bus_vtable BRIGHTNESS_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "SetBrightness",
-        "u",
-        SD_BUS_PARAM(percentage),
-        "",
-        "",
+        SD_BUS_ARGS("u", percentage),
+        SD_BUS_NO_RESULT,
         set_brightness_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "GetBrightness",
-        "",
-        "",
-        "u",
-        SD_BUS_PARAM(percentage),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("u", percentage),
         get_brightness_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),

@@ -11,15 +11,12 @@
 const char BATTERY_PATH[] = "/com/vinii/vgsc/Battery";
 const char BATTERY_INTERFACE[] = "com.vinii.vgsc.Battery";
 
-// TODO: use SD_BUS_METHOD_WITH_ARGS on all SD_BUS_METHOD_WITH_NAMES
 const sd_bus_vtable BATTERY_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "GetBattery",
-        "",
-        "",
-        "su",
-        SD_BUS_PARAM(icon) SD_BUS_PARAM(percentage),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("s", icon, "u", percentage),
         get_battery_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),

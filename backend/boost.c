@@ -10,21 +10,17 @@ const char BOOST_INTERFACE[] = "com.vinii.vgsc.Boost";
 
 const sd_bus_vtable BOOST_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "ToggleBoost",
-        "",
-        "",
-        "b",
-        SD_BUS_PARAM(is_active),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("b", is_active),
         toggle_boost_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
-    SD_BUS_METHOD_WITH_NAMES(
+    SD_BUS_METHOD_WITH_ARGS(
         "GetBoost",
-        "",
-        "",
-        "b",
-        SD_BUS_PARAM(is_active),
+        SD_BUS_NO_ARGS,
+        SD_BUS_RESULT("b", is_active),
         get_boost_handler,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
