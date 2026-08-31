@@ -21,7 +21,7 @@
             pname = binary_name;
             version = "0.1";
 
-            src = ./.;
+            src = pkgs.nix-gitignore.gitignoreSource [] ./.;
 
             nativeBuildInputs = with pkgs; [
                 pkg-config
