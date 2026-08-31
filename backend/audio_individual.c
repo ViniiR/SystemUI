@@ -104,6 +104,7 @@ ResultHeapStructPointer get_stream(unsigned int id) {
     VolumeStatus *status = result_volume.ok_value;
 
     AudioStream *audio = malloc(sizeof(AudioStream));
+    audio->sink_id = id;
     audio->name = strdup(output_name);
     audio->volume = status->volume;
     audio->is_muted = status->is_muted;

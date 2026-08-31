@@ -35,7 +35,7 @@ const sd_bus_vtable AUDIO_VTABLE[] = {
     SD_BUS_METHOD_WITH_ARGS(
         "GetAllAudioIndividual",
         SD_BUS_NO_ARGS,
-        SD_BUS_RESULT("a(sub)", stream_array),
+        SD_BUS_RESULT("a(usub)", stream_array),
         get_all_audio_handler_individual,
         SD_BUS_VTABLE_UNPRIVILEGED
     ),
@@ -134,10 +134,11 @@ int get_all_audio_handler_individual(
     sd_bus_message *p_reply_msg = NULL;
     sd_bus_message_new_method_return(p_msg, &p_reply_msg);
 
-    sd_bus_message_open_container(p_reply_msg, SD_BUS_TYPE_ARRAY, "(sub)");
+    sd_bus_message_open_container(p_reply_msg, SD_BUS_TYPE_ARRAY, "(usub)");
     for (size_t i = 0; i < size; i++) {
-        sd_bus_message_open_container(p_reply_msg, SD_BUS_TYPE_STRUCT, "sub");
+        sd_bus_message_open_container(p_reply_msg, SD_BUS_TYPE_STRUCT, "usub");
 
+        sd_bus_message_append(p_reply_msg, "u", array[i]->sink_id);
         sd_bus_message_append(p_reply_msg, "s", array[i]->name);
         sd_bus_message_append(p_reply_msg, "u", array[i]->volume);
         sd_bus_message_append(p_reply_msg, "b", array[i]->is_muted);

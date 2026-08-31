@@ -8,6 +8,7 @@ typedef struct {
 } VolumeStatus;
 
 typedef struct {
+    unsigned int sink_id;
     char *name;
     unsigned int volume;
     bool is_muted;
