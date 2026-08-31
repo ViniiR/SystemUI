@@ -9,6 +9,13 @@
         lib = pkgs.lib;
         interface_name = "com.vinii.vgsc";
         binary_name = "vgscd";
+        #
+        runtimePackages = with pkgs; [
+            gawk
+            jq
+            pipewire
+            wireplumber
+        ];
     in {
         packages.${system}.default = pkgs.stdenv.mkDerivation rec {
             pname = binary_name;
@@ -21,13 +28,17 @@
                 cmake
                 gcc
 
+                # TODO: integrate rust stuff here
                 # rustc
                 # cargo
             ];
-            buildInputs = with pkgs; [
-                systemd
-                dbus
-            ];
+            buildInputs = with pkgs;
+                [
+                    # Libraries
+                    systemd
+                    dbus
+                ]
+                ++ runtimePackages;
 
             installPhase = ''
                 runHook preInstall
@@ -70,10 +81,7 @@
                     XDG_RUNTIME_DIR = "/run/user/1000";
                     DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/1000/bus";
                 };
-                path = with pkgs; [
-                    wireplumber
-                    gawk
-                ];
+                path = runtimePackages;
                 serviceConfig = {
                     Type = "dbus";
                     BusName = interface_name;
@@ -91,11 +99,11 @@
             # Packages available in the User's shell
             packages = with pkgs; [
                 pkg-config
+                systemd
                 cmake
                 gcc
                 gtk4
                 rustc
-                systemd
                 cargo
                 clippy
                 rust-analyzer
