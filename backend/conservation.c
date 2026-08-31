@@ -7,9 +7,6 @@
 const char CONSERVATION_PATH[] = "/com/vinii/vgsc/Conservation";
 const char CONSERVATION_INTERFACE[] = "com.vinii.vgsc.Conservation";
 
-// TODO: check if files exist before read and write
-// maybe add config file idk
-
 const sd_bus_vtable CONSERVATION_VTABLE[] = {
     SD_BUS_VTABLE_START(0),
     SD_BUS_METHOD_WITH_ARGS(

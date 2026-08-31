@@ -2,16 +2,13 @@
 #include "sys/wait.h"
 #include "types.h"
 #include "unistd.h"
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <threads.h>
 
 /// Remove all newlines '\r' '\n' from str
-void trim_newlines(char *str){
-    str[strcspn(str, "\r\n")] = 0;
-}
+void trim_newlines(char *str) { str[strcspn(str, "\r\n")] = 0; }
 
 ResultHeapString read_file(const char *path) {
     ResultHeapString res = {
@@ -20,7 +17,7 @@ ResultHeapString read_file(const char *path) {
 
     FILE *f = fopen(path, "r");
     if (f == NULL) {
-        res.err_msg = "File is null";
+        res.err_msg = "Failed to open file with 'read' mode";
         return res;
     }
 
@@ -49,7 +46,7 @@ ResultVoid write_file(const char *path, const char *content) {
 
     FILE *f = fopen(path, "w");
     if (f == NULL) {
-        res.err_msg = "Failed to open file";
+        res.err_msg = "Failed to open file with 'write' mode";
         return res;
     }
 
