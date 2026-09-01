@@ -7,6 +7,13 @@ pub enum HandlerError<'a> {
     ObjectError(&'a str),
 }
 
+pub struct AudioStream {
+    sink_id: u32,
+    name: String,
+    volume: u32,
+    is_muted: bool,
+}
+
 pub struct Program;
 impl Program {
     // Vinii's Graphical System Controller (Daemon)
@@ -52,6 +59,9 @@ pub mod dbus {
         pub const GET_AUDIO: &str = "GetAudio";
         pub const SET_AUDIO: &str = "SetAudio";
         pub const TOGGLE_AUDIO_MUTED: &str = "ToggleAudioMuted";
+        pub const GET_ALL_AUDIO_INDIVIDUAL: &str = "GetAllAudioIndividual";
+        pub const SET_AUDIO_INDIVIDUAL: &str = "SetAudioIndividual";
+        pub const TOGGLE_AUDIO_MUTED_INDIVIDUAL: &str = "ToggleAudioMutedIndividual";
     }
 
     pub struct Timeout;

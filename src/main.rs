@@ -7,6 +7,7 @@ use gtk::{Application, ApplicationWindow, EventControllerFocus, EventControllerK
 use crate::types::Program;
 
 mod audio;
+mod audio_individual;
 mod battery;
 mod boost;
 mod brightness;
@@ -88,6 +89,12 @@ fn activate(app: &Application) {
 
         if let Err(e) = audio::handle_audio(&builder, dbus_connection.clone()) {
             g_critical!(None, "Audio error: {e:?}");
+            return;
+        };
+
+        if let Err(e) = audio_individual::handle_audio_individual(&builder, dbus_connection.clone())
+        {
+            g_critical!(None, "Audio Individual error: {e:?}");
             return;
         };
     });

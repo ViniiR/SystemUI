@@ -215,11 +215,37 @@
             </child>
 
             <child>
+            <object class="GtkExpander">
+                <layout>
+                    <property name="column">0</property>
+                    <property name="row">3</property>
+                    <property name="column-span">4</property>
+                    <property name="row-span">1</property>
+                </layout>
+
+                <style>
+                    <class name="expander-list"/>
+                </style>
+
+                <!-- <child> -->
+                <!-- <object class="GtkListView"> -->
+                <!---->
+                <!-- </object> -->
+                <!-- </child> -->
+                <child>
+                <object class="GtkLabel">
+                    <property name="label">TODO:</property>
+                </object>
+                </child>
+            </object>
+            </child>
+
+            <child>
             <object class="GtkButton" id="wifi-dropdown">
                 <property name="label">Wi-Fi dropdown</property>
                 <layout>
                     <property name="column">0</property>
-                    <property name="row">3</property>
+                    <property name="row">4</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
@@ -230,7 +256,7 @@
                 <property name="label">Bluetooth dropdown</property>
                 <layout>
                     <property name="column">2</property>
-                    <property name="row">3</property>
+                    <property name="row">4</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
@@ -241,7 +267,7 @@
             <object class="GtkButton" id="conservation-mode-button">
                 <layout>
                     <property name="column">0</property>
-                    <property name="row">4</property>
+                    <property name="row">5</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
@@ -280,7 +306,7 @@
                 <property name="label">Power</property>
                 <layout>
                     <property name="column">2</property>
-                    <property name="row">4</property>
+                    <property name="row">5</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
@@ -298,7 +324,7 @@
                 <property name="label">Boost</property>
                 <layout>
                     <property name="column">0</property>
-                    <property name="row">5</property>
+                    <property name="row">6</property>
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>

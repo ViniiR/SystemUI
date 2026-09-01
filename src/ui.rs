@@ -36,3 +36,13 @@ pub fn get_brightness_icon(_percentage: u32) -> String {
     //    _ => String::from("display-brightness-high-symbolic"),
     //}
 }
+
+pub fn get_individual_audio_icon(name: &str) -> String {
+    if name.contains("Youtube") {
+        String::from("firefox-logo.svg")
+    } else if name.contains("MPD Pulse Audio Output") {
+        String::from("audio-headset-symbolic.svg")
+    } else {
+        String::from("audio-card-symbolic.svg")
+    }
+}
