@@ -249,6 +249,11 @@
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="unused"/>
+                </style>
+
             </object>
             </child>
             <child>
@@ -260,6 +265,11 @@
                     <property name="column-span">2</property>
                     <property name="row-span">1</property>
                 </layout>
+
+                <style>
+                    <class name="unused"/>
+                </style>
+
             </object>
             </child>
 
