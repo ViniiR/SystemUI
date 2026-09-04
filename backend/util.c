@@ -88,7 +88,9 @@ ResultVoid exec_command(
     }
 
     //
+
     char full_output[size];
+    full_output[0] = '\0';
 
     char *line = NULL;
     size_t len = 0;
@@ -111,6 +113,7 @@ ResultVoid exec_command(
 
     snprintf(output, size, "%s", full_output);
 
+    free(line);
     pclose(fp);
 
     res.variant = OK;

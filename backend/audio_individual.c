@@ -44,6 +44,11 @@ ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
     while ((read_bytes = getline(&line, &len, f)) != -1) {
         trim_newlines(line);
 
+        // Avoids final \n
+        if (strcmp(line, "") == 0) {
+            continue;
+        }
+
         ResultHeapStructPointer result = get_stream(atoi(line));
         if (result.variant == ERR) {
             free(line);
@@ -53,8 +58,7 @@ ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
         }
         AudioStream *stream = result.ok_value;
 
-        stream_array[*array_size] = stream;
-        (*array_size)++;
+        stream_array[(*array_size)++] = stream;
     }
 
     free(line);
