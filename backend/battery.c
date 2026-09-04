@@ -143,29 +143,37 @@ static ResultInt get_battery_percentage() {
         result_directory.ok_value,
         energy_now
     );
+    free(result_directory.ok_value);
 
     ResultHeapString result_full = read_file(full_capacity);
     if (result_full.variant == ERR) {
-        free(result_directory.ok_value);
         res.err_msg = result_full.err_msg;
         return res;
     }
-    int full_number = atoi(result_full.ok_value);
+    ResultInt full_number_result = string_to_int(result_full.ok_value);
+    free(result_full.ok_value);
+    if (full_number_result.variant == ERR) {
+        res.err_msg = full_number_result.err_msg;
+        return res;
+    }
 
     ResultHeapString result_now = read_file(now_capacity);
     if (result_now.variant == ERR) {
-        free(result_directory.ok_value);
-        free(result_full.ok_value);
         res.err_msg = result_now.err_msg;
         return res;
     }
-    int now_number = atoi(result_now.ok_value);
-
-    int value = (int)round(((double)now_number / (double)full_number) * 100.0);
-
-    free(result_directory.ok_value);
-    free(result_full.ok_value);
+    ResultInt now_number_result = string_to_int(result_now.ok_value);
     free(result_now.ok_value);
+    if (now_number_result.variant == ERR) {
+        res.err_msg = now_number_result.err_msg;
+        return res;
+    }
+
+    int value = (int)round(
+        ((double)now_number_result.ok_value /
+         (double)full_number_result.ok_value) *
+        100.0
+    );
 
     res.variant = OK;
     res.ok_value = value;
@@ -212,7 +220,10 @@ static ResultInt get_charging_status() {
     return res;
 }
 
-static int format_percentage(const int percentage) {
+static ResultInt format_percentage(const int percentage) {
+    ResultInt res = {
+        .variant = ERR, .err_msg = RESULT_ERR_MSG_UNKNOWN, .ok_value = 0
+    };
     int battery_level_formatted = 0;
 
     if (percentage <= 0) {
@@ -224,10 +235,18 @@ static int format_percentage(const int percentage) {
     } else {
         char first[1 + 1];
         snprintf(first, sizeof(first), "%1.0f", (float)percentage);
-        battery_level_formatted = atoi(first) * 10;
+        ResultInt result_int = string_to_int(first);
+        if (result_int.variant == ERR) {
+            res.err_msg = result_int.err_msg;
+            return res;
+        }
+        battery_level_formatted = result_int.ok_value * 10;
     }
 
-    return battery_level_formatted;
+    res.variant = OK;
+    res.err_msg = "";
+    res.ok_value = battery_level_formatted;
+    return res;
 }
 
 static ResultHeapString allocate_suffix(const ChargingStatus status) {
@@ -289,14 +308,20 @@ static ResultHeapString get_battery_icon() {
         return res;
     }
 
-    int battery_level_formatted = format_percentage(result_percentage.ok_value);
+    ResultInt battery_level_formatted_result =
+        format_percentage(result_percentage.ok_value);
+    if (battery_level_formatted_result.variant == ERR) {
+        free(result_suffix.ok_value);
+        res.err_msg = battery_level_formatted_result.err_msg;
+        return res;
+    }
 
     char *buf;
     int size = asprintf(
         &buf,
         "%s%i%s",
         battery_prefix,
-        battery_level_formatted,
+        battery_level_formatted_result.ok_value,
         result_suffix.ok_value
     );
     free(result_suffix.ok_value);

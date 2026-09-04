@@ -49,7 +49,14 @@ ResultVoid get_all_streams(AudioStream *stream_array[], size_t *array_size) {
             continue;
         }
 
-        ResultHeapStructPointer result = get_stream(atoi(line));
+        ResultInt line_int_result = string_to_int(line);
+        if (line_int_result.variant==ERR) {
+            free(line);
+            fclose(f);
+            res.err_msg = line_int_result.err_msg;
+            return res;
+        }
+        ResultHeapStructPointer result = get_stream(line_int_result.ok_value);
         if (result.variant == ERR) {
             free(line);
             fclose(f);

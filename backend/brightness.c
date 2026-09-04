@@ -161,11 +161,27 @@ static ResultInt get_brightness() {
             return res;
         }
 
-        int percent = (atoi(result_current_brightness.ok_value) * 100) /
-                      atoi(result_max_brightness.ok_value);
-
-        free(result_max_brightness.ok_value);
+        ResultInt result_current_brightness_int =
+            string_to_int(result_current_brightness.ok_value);
         free(result_current_brightness.ok_value);
+        if (result_current_brightness_int.variant == ERR) {
+            free(result_max_brightness.ok_value);
+            closedir(dir);
+            res.err_msg = result_current_brightness_int.err_msg;
+            return res;
+        }
+        ResultInt result_max_brightness_int =
+            string_to_int(result_max_brightness.ok_value);
+        free(result_max_brightness.ok_value);
+        if (result_max_brightness_int.variant == ERR) {
+            closedir(dir);
+            res.err_msg = result_max_brightness_int.err_msg;
+            return res;
+        }
+
+        int percent = (result_current_brightness_int.ok_value * 100) /
+                      result_max_brightness_int.ok_value;
+
         closedir(dir);
 
         res.variant = OK;
@@ -190,9 +206,14 @@ static ResultVoid set_brightness(
         return res;
     }
 
-    int calculated_value =
-        ceil((float)percent * atoi(result_max.ok_value) / 100);
+    ResultInt result_max_int = string_to_int(result_max.ok_value);
     free(result_max.ok_value);
+    if (result_max_int.variant == ERR) {
+        res.err_msg = result_max_int.err_msg;
+        return res;
+    }
+
+    int calculated_value = ceil((float)percent * result_max_int.ok_value / 100);
 
     char str[STRING_KB];
     snprintf(str, sizeof(str), "%i", calculated_value);

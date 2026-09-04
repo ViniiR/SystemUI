@@ -5,6 +5,8 @@
 
 void trim_newlines(char *str);
 
+ResultInt string_to_int(const char *string);
+
 ResultHeapString read_file(const char *path);
 
 ResultVoid write_file(const char *path, const char *content);
