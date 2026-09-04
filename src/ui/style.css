@@ -17,7 +17,7 @@
 }
 
 * {
-  outline-width: 0px; 
+  outline-width: 0px;
   outline: none;
 }
 
@@ -64,7 +64,7 @@
   background-color: var(--foreground);
 }
 .scale trough {
-    background-color: var(--disabled);
+  background-color: var(--disabled);
 }
 
 .scale:hover highlight {
@@ -77,8 +77,8 @@
 .scale-label {
 }
 
-.expander-list {
-    padding: 0px 15px;
+.expander-list > box > title {
+  padding: 0px 15px;
 }
 
 /* . */
@@ -106,10 +106,14 @@
 }
 
 .button-box {
-    padding: 0px 0px 0px 10px;
+  padding: 0px 0px 0px 10px;
 }
 
 .unused {
-    background-color: var(--unused);
-    color: var(--unused-text);
+  background-color: var(--unused);
+  color: var(--unused-text);
+}
+
+.debug-red {
+    background-color: red;
 }

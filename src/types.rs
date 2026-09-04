@@ -7,11 +7,28 @@ pub enum HandlerError<'a> {
     ObjectError(&'a str),
 }
 
+#[derive(Debug, Clone)]
 pub struct AudioStream {
-    sink_id: u32,
-    name: String,
-    volume: u32,
-    is_muted: bool,
+    pub sink_id: u32,
+    pub name: String,
+    pub volume: u32,
+    pub is_muted: bool,
+}
+pub type AudioStreamTuple = (u32, String, u32, bool);
+impl From<AudioStream> for AudioStreamTuple {
+    fn from(value: AudioStream) -> Self {
+        (value.sink_id, value.name, value.volume, value.is_muted)
+    }
+}
+impl From<AudioStreamTuple> for AudioStream {
+    fn from(value: AudioStreamTuple) -> Self {
+        AudioStream {
+            sink_id: value.0,
+            name: value.1,
+            volume: value.2,
+            is_muted: value.3,
+        }
+    }
 }
 
 pub struct Program;

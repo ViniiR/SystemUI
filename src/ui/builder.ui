@@ -215,7 +215,7 @@
             </child>
 
             <child>
-            <object class="GtkExpander">
+            <object class="GtkExpander" id="individual-audio-expander">
                 <layout>
                     <property name="column">0</property>
                     <property name="row">3</property>
@@ -227,14 +227,8 @@
                     <class name="expander-list"/>
                 </style>
 
-                <!-- <child> -->
-                <!-- <object class="GtkListView"> -->
-                <!---->
-                <!-- </object> -->
-                <!-- </child> -->
                 <child>
-                <object class="GtkLabel">
-                    <property name="label">TODO:</property>
+                <object class="GtkListView" id="individual-audio-list">
                 </object>
                 </child>
             </object>
